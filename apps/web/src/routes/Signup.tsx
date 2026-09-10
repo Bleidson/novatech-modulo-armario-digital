@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
-import { ThemeToggle } from "../components/ThemeToggle";
+import { Header } from "../components/Header";
 
 // Cadastro publico do Professor - sempre PENDING (ver auth.service.ts no backend).
 // Nunca loga automaticamente: so mostra a confirmacao e manda para o login, onde a
@@ -32,23 +32,25 @@ export function Signup() {
 
   if (done) {
     return (
-      <div className="app-main" style={{ paddingTop: "15vh" }}>
-        <h1>Cadastro enviado</h1>
-        <p className="text-muted">
-          Seu cadastro foi enviado para a coordenacao. Voce vai poder entrar assim que ele for aprovado.
-        </p>
-        <button type="button" className="btn btn-primary btn-block" onClick={() => navigate("/login")}>
-          Voltar para o login
-        </button>
+      <div className="page-shell">
+        <Header />
+        <div className="app-main" style={{ paddingTop: "10vh" }}>
+          <h1>Cadastro enviado</h1>
+          <p className="text-muted">
+            Seu cadastro foi enviado para a coordenacao. Voce vai poder entrar assim que ele for aprovado.
+          </p>
+          <button type="button" className="btn btn-primary btn-block" onClick={() => navigate("/login")}>
+            Voltar para o login
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="app-main" style={{ paddingTop: "8vh" }}>
-      <div style={{ position: "fixed", top: 16, right: 16 }}>
-        <ThemeToggle compact />
-      </div>
+    <div className="page-shell">
+      <Header />
+      <div className="app-main" style={{ paddingTop: "4vh" }}>
       <h1>Cadastro de professor</h1>
       <p className="text-muted">Seu acesso precisa ser aprovado pela coordenacao antes do primeiro login.</p>
 
@@ -106,6 +108,7 @@ export function Signup() {
       <p className="text-muted" style={{ marginTop: 20, fontSize: 13 }}>
         Ja tem cadastro aprovado? <Link to="/login">Entrar</Link>
       </p>
+      </div>
     </div>
   );
 }

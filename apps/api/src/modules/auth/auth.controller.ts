@@ -1,11 +1,12 @@
 import type { Request, Response } from "express";
-import { loginSchema, professorSignupSchema, rejectProfessorSchema } from "./auth.validation.js";
+import { loginSchema, professorSignupSchema, rejectProfessorSchema, updateOwnProfileSchema } from "./auth.validation.js";
 import {
   authenticate,
   signupProfessor,
   listPendingProfessors,
   approveProfessor,
   rejectProfessor,
+  updateOwnProfile,
 } from "./auth.service.js";
 import {
   createSession,
@@ -34,7 +35,10 @@ export async function login(req: Request, res: Response) {
     const token = await createSession(user.id, req);
     setSessionCookie(res, token);
     setCsrfCookie(res);
-    res.json({ success: true, data: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    res.json({
+      success: true,
+      data: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role },
+    });
     return;
   } catch (err) {
     // Falha de status (PENDING/REJECTED/SUSPENDED) e do usuario que EXISTE - nao faz
@@ -54,7 +58,9 @@ export async function login(req: Request, res: Response) {
     setCsrfCookie(res);
     res.json({
       success: true,
-      data: { id: result.auth.userId, name: result.auth.name, email: result.auth.email, role: result.auth.role },
+      // phone: null - a Core (dona da Account do Administrador) nao modela
+      // telefone, so o professor tem (ver auth.service.ts updateOwnProfile).
+      data: { id: result.auth.userId, name: result.auth.name, email: result.auth.email, phone: null, role: result.auth.role },
     });
   }
 }
@@ -105,6 +111,14 @@ export async function logout(req: Request, res: Response) {
 
 export function me(req: Request, res: Response) {
   res.json({ success: true, data: req.user });
+}
+
+// PATCH /auth/me - pagina "Conta" do professor (ver auth.service.ts
+// updateOwnProfile - 403 se quem chama nao for PROFESSOR).
+export async function updateMe(req: Request, res: Response) {
+  const input = updateOwnProfileSchema.parse(req.body);
+  const user = await updateOwnProfile({ id: req.user!.id, role: req.user!.role }, input);
+  res.json({ success: true, data: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role } });
 }
 
 // Fila de aprovacao - so ADMIN (requireRole na rota).

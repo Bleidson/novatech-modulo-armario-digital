@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Navigate, Link, useLocation } from "react-router-dom";
 import { ApiError } from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { ThemeToggle } from "../components/ThemeToggle";
+import { Header } from "../components/Header";
 
 export function Login() {
   const { login, user, status } = useAuth();
@@ -32,10 +32,9 @@ export function Login() {
   }
 
   return (
-    <div className="app-main" style={{ paddingTop: "15vh" }}>
-      <div style={{ position: "fixed", top: 16, right: 16 }}>
-        <ThemeToggle compact />
-      </div>
+    <div className="page-shell">
+      <Header />
+      <div className="app-main" style={{ paddingTop: "10vh" }}>
       <h1>Armario Digital</h1>
       <p className="text-muted">Entre com seu e-mail e senha.</p>
 
@@ -74,6 +73,7 @@ export function Login() {
       <p className="text-muted" style={{ marginTop: 20, fontSize: 13 }}>
         Ainda nao tem cadastro? <Link to="/cadastro">Cadastre-se como professor</Link>
       </p>
+      </div>
     </div>
   );
 }

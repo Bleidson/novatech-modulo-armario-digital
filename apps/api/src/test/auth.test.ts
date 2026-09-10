@@ -145,4 +145,57 @@ describe("auth - cadastro de professor (pending -> approve/reject)", () => {
     expect(res.status).toBe(422);
     expect(res.body.error.code).toBe("VALIDATION_ERROR");
   });
+
+  // Pagina "Conta" do professor (Tarefa de ajuste): autoatendimento de nome/WhatsApp.
+  it("PATCH /auth/me atualiza nome e WhatsApp do proprio professor; recusa (403) se for ADMIN", async () => {
+    await request(app)
+      .post("/api/v1/auth/signup")
+      .set("Host", HOST_A)
+      .send({ name: "Professor Conta", email: "prof-conta@escola.example", phone: "11999990006", password: "SenhaForte123" });
+
+    const { token: adminToken } = await createAdminSessionFixture();
+    const pendingRes = await request(app)
+      .get("/api/v1/auth/professors/pending")
+      .set("Host", HOST_A)
+      .set("Cookie", `pdp_admin_session=${adminToken}`);
+    const professorId = pendingRes.body.data.find((p: { email: string }) => p.email === "prof-conta@escola.example").id;
+    await request(app)
+      .post(`/api/v1/auth/professors/${professorId}/approve`)
+      .set("Host", HOST_A)
+      .set("Cookie", `pdp_admin_session=${adminToken}`);
+
+    const loginRes = await request(app)
+      .post("/api/v1/auth/login")
+      .set("Host", HOST_A)
+      .send({ email: "prof-conta@escola.example", password: "SenhaForte123" });
+    expect(loginRes.body.data.phone).toBe("11999990006");
+    const sessionCookie = extractCookie(loginRes.headers["set-cookie"] as unknown as string[], SESSION_COOKIE_NAME);
+    const csrfCookie = extractCookie(loginRes.headers["set-cookie"] as unknown as string[], CSRF_COOKIE_NAME);
+
+    const patchRes = await request(app)
+      .patch("/api/v1/auth/me")
+      .set("Host", HOST_A)
+      .set("Cookie", `${SESSION_COOKIE_NAME}=${sessionCookie}; ${CSRF_COOKIE_NAME}=${csrfCookie}`)
+      .set("X-CSRF-Token", csrfCookie ?? "")
+      .send({ name: "Professor Conta Editado", phone: "11999990099" });
+    expect(patchRes.status).toBe(200);
+    expect(patchRes.body.data.name).toBe("Professor Conta Editado");
+    expect(patchRes.body.data.phone).toBe("11999990099");
+
+    const meRes = await request(app)
+      .get("/api/v1/auth/me")
+      .set("Host", HOST_A)
+      .set("Cookie", `${SESSION_COOKIE_NAME}=${sessionCookie}`);
+    expect(meRes.body.data.name).toBe("Professor Conta Editado");
+    expect(meRes.body.data.phone).toBe("11999990099");
+
+    // ADMIN e projecao local da Core - editar aqui nunca deveria "colar" (o proximo
+    // login sobrescreveria o nome de volta), entao o endpoint recusa de saida.
+    const adminPatch = await request(app)
+      .patch("/api/v1/auth/me")
+      .set("Host", HOST_A)
+      .set("Cookie", `pdp_admin_session=${adminToken}`)
+      .send({ name: "Tentando Editar", phone: "11999990000" });
+    expect(adminPatch.status).toBe(403);
+  });
 });

@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import { LayoutDashboard, Package, CalendarClock, UserCheck } from "lucide-react";
 import { BottomNav } from "../../components/BottomNav";
 import { Sidebar } from "../../components/Sidebar";
-import { PageHeader } from "../../components/PageHeader";
+import { Header } from "../../components/Header";
 
 // Casa das 4 secoes principais do ADMIN. "Painel", "Materiais" e "Horarios" sao o
 // modulo materials/classPeriods; "Aprovacoes" (fila de professor pendente) e a UI da
@@ -23,7 +23,7 @@ export function AdminLayout() {
     <div className="app-shell">
       <Sidebar items={NAV_ITEMS} />
       <div className="app-content">
-        <PageHeader />
+        <Header />
         <main className="app-main">
           <Outlet />
         </main>

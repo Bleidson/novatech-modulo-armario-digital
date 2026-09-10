@@ -7,7 +7,13 @@ import { env } from "../../shared/env.js";
 // token em texto puro; o banco guarda apenas o hash (sha256) - um dump da tabela
 // `sessions` nunca permite sequestrar uma sessao ativa.
 export const SESSION_COOKIE_NAME = "pdp_session";
-const SESSION_TTL_HOURS = 12;
+// 30 dias, nao 12h: o cookie ja tem maxAge (setSessionCookie abaixo), entao
+// tecnicamente ja sobrevivia a fechar a aba - o problema real era a JANELA curta
+// demais para uso normal (professor fecha o navegador de manha, volta a tarde ou
+// no dia seguinte e cai fora). Renovacao continua deslizante (ver
+// SESSION_RENEW_THRESHOLD_MINUTES abaixo): quem usa o sistema regularmente nunca
+// chega perto do teto; so expira de verdade apos 30 dias de INATIVIDADE total.
+const SESSION_TTL_HOURS = 24 * 30;
 const SESSION_RENEW_THRESHOLD_MINUTES = 5;
 
 // Double-submit cookie - defesa em profundidade alem de SameSite=Lax + CORS de

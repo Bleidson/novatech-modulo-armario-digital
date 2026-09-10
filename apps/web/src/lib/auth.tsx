@@ -8,6 +8,7 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   role: Role;
 }
 
@@ -18,6 +19,9 @@ interface AuthContextValue {
   status: AuthStatus;
   login: (email: string, password: string) => Promise<AuthUser>;
   logout: () => Promise<void>;
+  // Reconsulta /auth/me - usado pela pagina Conta depois de PATCH /auth/me para
+  // refletir nome/telefone novos no Header e no resto do app sem precisar de F5.
+  refresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -60,7 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("anonymous");
   }, []);
 
-  return <AuthContext.Provider value={{ user, status, login, logout }}>{children}</AuthContext.Provider>;
+  const refresh = useCallback(async () => {
+    const u = await api.get<AuthUser>("/auth/me");
+    setUser(u);
+  }, []);
+
+  return <AuthContext.Provider value={{ user, status, login, logout, refresh }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextValue {

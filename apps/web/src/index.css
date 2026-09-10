@@ -78,6 +78,12 @@
   --color-accent-2-800: color-mix(in srgb, var(--color-accent-2) 52%, var(--color-text));
 
   --color-warning-100: color-mix(in srgb, var(--color-warning) 10%, var(--color-surface));
+  /* 300/600: ganharam uso alem de alerta/badge depois do ajuste de header - o
+     dourado virou tambem um acento decorativo (faixa do header, distintivo de
+     papel do usuario), entao precisa de mais um degrau entre o fundo suave (100)
+     e o texto escuro (800). */
+  --color-warning-300: color-mix(in srgb, var(--color-warning) 35%, var(--color-surface));
+  --color-warning-600: color-mix(in srgb, var(--color-warning) 85%, var(--color-text));
   --color-warning-800: color-mix(in srgb, var(--color-warning) 52%, var(--color-text));
 
   --color-cta-100: color-mix(in srgb, var(--color-cta) 10%, var(--color-surface));
@@ -167,12 +173,85 @@ button { font-family: inherit; }
   margin: 0 auto;
   padding: 16px;
 }
-.page-header {
+/* Wrapper leve para paginas sem Sidebar/BottomNav (Login, Cadastro) - .app-shell
+   tem padding pensado pra essas duas navegacoes, que nao existem aqui. */
+.page-shell {
+  min-height: 100%;
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+}
+
+/* — header organizado (Tarefa de ajuste: logo + marca + tema + logout, tudo num
+   lugar so, nunca mais o toggle de tema "solto" flutuando por cima do conteudo).
+   Mesmo componente em toda pagina do modulo - logado (Header.tsx dentro de
+   AdminLayout/ProfessorLayout) ou nao (Login/Cadastro, sem usuario ainda, so
+   esconde a area de usuario/logout). Faixa dourada embaixo: aplicacao do
+   "destaque em tons de amarelo" tambem no tema escuro - --color-warning e uma
+   semente fixa, nao muda de tom entre temas, entao continua vibrante no escuro
+   sem precisar de override nenhum. */
+.site-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 10px 16px;
-  border-bottom: 1px solid var(--color-divider);
+  border-bottom: 2px solid var(--color-warning);
+  background: var(--color-surface);
+  flex-wrap: wrap;
+}
+.site-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.site-header-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex: none;
+}
+.site-header-titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.site-header-titles strong {
+  font-size: 14px;
+}
+.site-header-titles span {
+  font-size: 10.5px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.site-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+.site-header-user {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
+.site-header-user em {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-warning-800);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+@media (max-width: 480px) {
+  .site-header-titles { display: none; }
+  .site-header-user { display: none; }
 }
 .bottom-nav {
   position: fixed;
@@ -578,3 +657,22 @@ button.badge:disabled { opacity: 0.6; cursor: not-allowed; }
   align-items: center;
 }
 .modal-head h3 { margin: 0; }
+
+/* — resumo de atividade (pagina Conta do professor) — icone em destaque dourado,
+   mesma logica de "usar o amarelo como acento" aplicada aqui tambem. */
+.activity-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+.activity-stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-warning-100);
+}
+.activity-stat svg { color: var(--color-warning-600); flex: none; }
+.activity-stat strong { display: block; font-size: 18px; line-height: 1.1; }
+.activity-stat span { display: block; font-size: 11px; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin-top: 2px; }

@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../../shared/prisma.js";
 import { AppError } from "../../shared/errors/AppError.js";
-import type { professorSignupSchema } from "./auth.validation.js";
+import type { professorSignupSchema, updateOwnProfileSchema } from "./auth.validation.js";
 import type { z } from "zod";
 
 // Autenticacao LOCAL - so Professor. ADMIN e SEMPRE recusado aqui de proposito (a
@@ -72,6 +72,21 @@ export async function approveProfessor(id: string, approvedBy: string) {
   return prisma.user.update({
     where: { id },
     data: { status: "ACTIVE", approvedBy, approvedAt: new Date() },
+  });
+}
+
+// PATCH /auth/me - pagina "Conta" do professor. So PROFESSOR: o ADMIN e uma
+// projecao local da Account da Core (upsertAdminProjection), e o proprio nome
+// dela e sobrescrito a cada verificacao de sessao - editar aqui pareceria
+// funcionar e sumiria no proximo login. Nunca mexe em email/status/role.
+export async function updateOwnProfile(caller: { id: string; role: string }, input: z.infer<typeof updateOwnProfileSchema>) {
+  if (caller.role !== "PROFESSOR") {
+    throw AppError.forbidden("Apenas professores podem editar os proprios dados aqui.");
+  }
+
+  return prisma.user.update({
+    where: { id: caller.id },
+    data: { name: input.name, phone: input.phone },
   });
 }
 

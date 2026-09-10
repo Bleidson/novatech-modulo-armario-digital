@@ -8,7 +8,7 @@ declare global {
   namespace Express {
     interface Request {
       tenant?: TenantInfo;
-      user?: { id: string; name: string; email: string; role: Role };
+      user?: { id: string; name: string; email: string; phone: string | null; role: Role };
     }
   }
 }

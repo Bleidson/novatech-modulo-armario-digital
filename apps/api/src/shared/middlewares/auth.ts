@@ -30,7 +30,7 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
         next(AppError.unauthorized());
         return;
       }
-      req.user = { id: user.id, name: user.name, email: user.email, role: user.role };
+      req.user = { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role };
       next();
       return;
     }
@@ -63,7 +63,7 @@ async function authenticateViaAdminCookie(req: Request, token: string): Promise<
 
   const user = await upsertAdminProjection(auth);
 
-  req.user = { id: user.id, name: user.name, email: user.email, role: "ADMIN" };
+  req.user = { id: user.id, name: user.name, email: user.email, phone: user.phone, role: "ADMIN" };
 }
 
 export function requireRole(...roles: Role[]) {

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import { login, logout, me, supportEntry, signup, pendingProfessors, approve, reject } from "./auth.controller.js";
+import { login, logout, me, updateMe, supportEntry, signup, pendingProfessors, approve, reject } from "./auth.controller.js";
 import { asyncHandler } from "../../shared/middlewares/asyncHandler.js";
 import { requireAuth, requireRole } from "../../shared/middlewares/auth.js";
 
@@ -40,6 +40,8 @@ authRouter.post("/signup", signupRateLimiter, asyncHandler(signup));
 authRouter.get("/support-entry", asyncHandler(supportEntry));
 authRouter.post("/logout", asyncHandler(logout));
 authRouter.get("/me", requireAuth, me);
+// Pagina "Conta" do professor (ver auth.controller.ts updateMe - 403 se ADMIN).
+authRouter.patch("/me", requireAuth, asyncHandler(updateMe));
 
 // Fila de aprovacao de Professor - exclusiva do ADMIN da escola.
 authRouter.get("/professors/pending", requireAuth, requireRole("ADMIN"), asyncHandler(pendingProfessors));

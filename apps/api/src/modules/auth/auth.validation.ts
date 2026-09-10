@@ -23,3 +23,12 @@ export const professorSignupSchema = z.object({
 export const rejectProfessorSchema = z.object({
   motivo: z.string().trim().min(1).optional(),
 });
+
+// PATCH /auth/me - autoatendimento, so PROFESSOR (ver auth.service.ts
+// updateOwnProfile). Nunca inclui email/senha aqui: email e a chave de
+// correlacao do cadastro (mudar sozinho seria trocar de identidade sem
+// verificacao), senha tem fluxo proprio que esta task nao pediu.
+export const updateOwnProfileSchema = z.object({
+  name: z.string().trim().min(1),
+  phone: z.string().trim().min(8, "Informe um WhatsApp valido, com DDD."),
+});
