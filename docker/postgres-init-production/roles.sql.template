@@ -1,0 +1,29 @@
+-- Armario Digital - producao. Mesmo padrao ja comprovado pela Core (docker/init/
+-- roles.sql.template) e pelo modulo Restaurante.
+--
+--   armario_owner -> ja existe (criada pela propria imagem oficial do Postgres
+--                    via POSTGRES_USER/POSTGRES_PASSWORD do compose). So o
+--                    Prisma Migrate usa esta role (DATABASE_MIGRATION_URL).
+--                    Dona das tabelas.
+--   armario_app   -> criada aqui. Quem atende requisicao (DATABASE_URL). Nao e
+--                    dona de nada, nao cria nem apaga tabela, so le e escreve.
+--
+-- SENHA PARAMETRIZADA (nunca hardcoded aqui) - chega via variavel psql
+-- (:'app_pw'), passada por 00-run.sh a partir de POSTGRES_APP_PASSWORD
+-- (docker-compose.production.yml, vinda do .env.production nao versionado).
+
+CREATE ROLE armario_app WITH LOGIN PASSWORD :'app_pw';
+
+GRANT CONNECT ON DATABASE armario_prod TO armario_app;
+GRANT USAGE ON SCHEMA public TO armario_app;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO armario_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO armario_app;
+
+-- Tabela criada por uma migracao FUTURA tambem precisa nascer acessivel - sem
+-- isto, cada `prisma migrate` novo exigiria um GRANT manual que alguem
+-- esqueceria.
+ALTER DEFAULT PRIVILEGES FOR ROLE armario_owner IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO armario_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE armario_owner IN SCHEMA public
+  GRANT USAGE, SELECT ON SEQUENCES TO armario_app;

@@ -1,0 +1,51 @@
+# RASCUNHO - nao aplicado em lugar nenhum. Bloco a ser MESCLADO manualmente
+# dentro de novatech-modulo-restaurante/docker/traefik/dynamic.yml (routers e
+# services JA existentes la, dentro de "http:"), que e o arquivo que o Traefik
+# de producao realmente le - este repositorio (armario-digital) nao tem
+# nenhum Traefik proprio.
+#
+# Por que reaproveitar o resolver "wildcard" (nao pedir certificado novo):
+# o DNS curinga "*.nthub.online" ja existe e resolve (confirmado no dynamic.yml
+# real, comentario dos routers tenant-restaurante-*), e o resolver "wildcard"
+# ja emite/renova um certificado *.nthub.online via DNS-01 pra outros
+# subdominios de tenant. armario-digital.nthub.online e so mais um nivel sob
+# esse curinga - pedir o MESMO certificado de novo (com o mesmo "domains:
+# main: *.nthub.online") reaproveita a emissao existente, nunca gera uma nova
+# ordem no Let's Encrypt. Nao precisa mexer em DNS nem em certificado - so
+# neste arquivo.
+#
+# Prioridade 60 (entre os hosts exatos em 100/50 e o wildcard generico de
+# tenant em 20/10) - "armario-digital" tambem casaria com o HostRegexp de
+# tenant do Restaurante (^[a-z0-9-]+\.nthub\.online$) se este router nao
+# existisse ou tivesse prioridade menor; precisa vencer aquele wildcard
+# genérico sempre.
+
+  routers:
+    armario-digital-api:
+      rule: "Host(`armario-digital.nthub.online`) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))"
+      entryPoints: [websecure]
+      tls:
+        certResolver: wildcard
+        domains:
+          - main: "*.nthub.online"
+      priority: 60
+      service: armario-digital-api
+    armario-digital-web:
+      rule: "Host(`armario-digital.nthub.online`)"
+      entryPoints: [websecure]
+      tls:
+        certResolver: wildcard
+        domains:
+          - main: "*.nthub.online"
+      priority: 55
+      service: armario-digital-web
+  services:
+    armario-digital-api:
+      loadBalancer:
+        servers:
+          # Alias definido em docker-compose.production.yml (networks.platform.aliases).
+          - url: "http://armario-digital-api:3401"
+    armario-digital-web:
+      loadBalancer:
+        servers:
+          - url: "http://armario-digital-web:80"

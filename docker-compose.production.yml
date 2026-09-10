@@ -1,0 +1,120 @@
+# Deploy de producao do Armario Digital no VPS - mesmo padrao ja usado pela
+# Core (novatech-core/docker-compose.production.yml) e pelo modulo Restaurante.
+#
+# NAO e o docker-compose.yml de desenvolvimento (esse continua so com Postgres
+# + Redis locais, apontando pro MockCoreClient). Este arquivo sobe o modulo
+# self-contained (Postgres e Redis PROPRIOS, nunca compartilhados com nenhum
+# outro modulo nem com a Core) e se junta a rede externa "platform" que a Core
+# e o modulo Restaurante ja usam, para falar com a Core real via DNS interno
+# do Docker (CORE_API_URL=http://novatech-core:3400) sem publicar nada da Core
+# na internet.
+#
+# Referencia imagens JA CONSTRUIDAS, nao um build a partir de fonte - o
+# mecanismo de deploy usado (Hostinger VPS project API) so sabe puxar imagem
+# pronta ou buscar um unico arquivo de compose de uma URL, nunca clona o
+# repositorio (nem bind mount de arquivo nenhum do repo funciona - por isso
+# ate o Postgres tem imagem propria, com docker/postgres-init-production/*
+# ja embutido via COPY - ver docker/postgres/Dockerfile - em vez do bind
+# mount que o docker-compose.yml de DEV usa). Build + push local (ou via CI
+# futuramente):
+#
+#   docker build -f apps/api/Dockerfile -t ghcr.io/bleidson/armario-digital-api:prod .
+#   docker push ghcr.io/bleidson/armario-digital-api:prod
+#   docker build -f apps/web/Dockerfile -t ghcr.io/bleidson/armario-digital-web:prod .
+#   docker push ghcr.io/bleidson/armario-digital-web:prod
+#   docker build -f docker/postgres/Dockerfile -t ghcr.io/bleidson/armario-digital-postgres:prod .
+#   docker push ghcr.io/bleidson/armario-digital-postgres:prod
+#
+# Imagens privadas no GHCR - o host que roda este compose precisa ja ter feito
+# "docker login ghcr.io" uma vez com um token classico com escopo
+# read:packages (ou write:packages).
+#
+# Uso (via Hostinger VPS project API ou docker compose direto no host):
+#   docker compose -f docker-compose.production.yml --env-file .env.production up -d
+#
+# Variaveis obrigatorias em .env.production (nunca versionado):
+#   POSTGRES_OWNER_PASSWORD, POSTGRES_APP_PASSWORD, SESSION_SECRET,
+#   CORE_INTERNAL_TOKEN (MESMO valor ja configurado do lado da Core).
+
+services:
+  postgres:
+    image: ghcr.io/bleidson/armario-digital-postgres:prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: armario_owner
+      POSTGRES_PASSWORD: ${POSTGRES_OWNER_PASSWORD}
+      POSTGRES_DB: armario_prod
+      # Lida pelo wrapper docker/postgres-init-production/00-run.sh (ja
+      # embutido na imagem) - nunca gravada no roles.sql.template versionado.
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD}
+    volumes:
+      - armario_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U armario_owner -d armario_prod"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # So a api fala com o proprio Postgres - nunca alcancavel de fora.
+    networks: [internal]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  api:
+    image: ghcr.io/bleidson/armario-digital-api:prod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3401"
+      APP_URL: https://armario-digital.nthub.online
+      DATABASE_URL: postgresql://armario_app:${POSTGRES_APP_PASSWORD}@postgres:5432/armario_prod?schema=public
+      DATABASE_MIGRATION_URL: postgresql://armario_owner:${POSTGRES_OWNER_PASSWORD}@postgres:5432/armario_prod?schema=public
+      SESSION_SECRET: ${SESSION_SECRET}
+      CORE_INTERNAL_TOKEN: ${CORE_INTERNAL_TOKEN}
+      # Alias fixo "novatech-core" na rede "platform" (compartilhada) - mesmo
+      # nome que o modulo Restaurante ja usa para a mesma finalidade.
+      CORE_API_URL: http://novatech-core:3400
+      REDIS_URL: redis://redis:6379
+      # Uploads persistem em volume nomeado (ver volumes abaixo) - o container
+      # em si e descartavel a cada deploy novo.
+      UPLOADS_DIR: uploads
+    volumes:
+      - armario_uploads:/app/apps/api/uploads
+    networks:
+      internal:
+      platform:
+        aliases: [armario-digital-api]
+
+  web:
+    image: ghcr.io/bleidson/armario-digital-web:prod
+    restart: unless-stopped
+    networks:
+      platform:
+        aliases: [armario-digital-web]
+
+networks:
+  internal:
+    name: armario_digital_internal
+    internal: true
+  # ATENCAO: nome fixo, tem que bater exatamente com o nome real da rede
+  # externa ja usada por novatech-core/docker-compose.production.yml e pelo
+  # modulo Restaurante - conferir com `docker network ls` antes de subir.
+  platform:
+    name: ntfood_demo_web
+    external: true
+
+volumes:
+  armario_pgdata:
+  armario_uploads:
