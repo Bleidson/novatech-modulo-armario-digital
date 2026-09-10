@@ -1,5 +1,8 @@
 node_modules/
 dist/
+# Cache incremental do "tsc -b" (apps/web) - especifico da maquina/execucao,
+# um teammate commitou por engano (tsc -b escreve sozinho apos cada build).
+tsconfig.tsbuildinfo
 # Anchoradas com / no inicio - "uploads/" sem isso casa com QUALQUER diretorio
 # chamado "uploads" na arvore inteira, inclusive apps/api/src/modules/uploads/
 # (codigo-fonte real do modulo de upload, nao arquivo enviado por usuario). Bug
