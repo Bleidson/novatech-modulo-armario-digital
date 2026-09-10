@@ -1,0 +1,44 @@
+# Modulo Armario Digital da Novatech Platform - banco de desenvolvimento local.
+#
+# Mesmo padrao do modulo Restaurante: Postgres com Row Level Security (nao MySQL),
+# roles/bancos criados por docker/postgres-init/01-roles-and-databases.sql, que so
+# roda na PRIMEIRA subida do volume. Depois de mexer naquele arquivo e preciso
+# recriar o volume: docker compose down -v && docker compose up -d
+services:
+  postgres:
+    image: postgres:17
+    container_name: armario-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres_dev_local
+      # Banco "postgres" padrao continua existindo; os bancos da aplicacao
+      # (armario_dev / armario_test) sao criados pelo script de init.
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - armario_postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d armario_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Cache de resolucao de tenant do HttpCoreClient (lib/cachedCoreClient.ts) - so entra
+  # em jogo quando CORE_API_URL esta definido (Core real). Com MockCoreClient (o padrao
+  # em dev/teste), nada aqui conecta - ver shared/redisClient.ts (lazyConnect).
+  redis:
+    image: redis:7-alpine
+    container_name: armario-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  armario_postgres_data:

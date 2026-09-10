@@ -1,0 +1,227 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TOKENS
+   ══════════════════════════════════════════════════════════════════════════
+   Mesmo padrao de sistema de design do modulo Restaurante (index.css): so as
+   SUPERFICIES e as SEMENTES de cor sao valores literais, as escalas (100..900)
+   sao derivadas com color-mix(). Diferenca aqui: a paleta e FIXA (definida no
+   briefing visual do modulo), nao trocada por tenant - por isso nao ha injecao
+   de primaryColor em runtime (ao contrario do Restaurante).
+
+   Paleta (briefing): #1C8C0B primario, #27A614 sucesso, #A67D03 alerta,
+   #F28705 acao/destaque, #F2F2F2 fundo. O sistema herdado do Restaurante so
+   tem 4 slots semanticos (accent, accent-2, warning, info) - "acao/destaque"
+   nao cabe em nenhum deles, entao ganha um QUINTO token novo: --color-cta.
+
+   Direcao visual deliberada: SEM gradiente, SEM sombra flutuante, SEM emoji.
+   Raio de borda pequeno e consistente (--radius-sm/md), cor faz o trabalho de
+   hierarquia visual em vez de profundidade/elevacao.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --font-heading: 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading-weight: 600;
+
+  color-scheme: light;
+  --color-bg: #F2F2F2;
+  --color-surface: #FFFFFF;
+  --color-text: #171717;
+  --color-divider: #E0E0E0;
+
+  --color-inverse-bg: #171717;
+  --color-inverse-text: #F2F2F2;
+  --color-scrim: rgba(23, 23, 23, .5);
+  --shadow-color: 23, 23, 23;
+
+  /* — sementes de cor (paleta fixa do modulo) — */
+  --color-accent: #1C8C0B;   /* primaria */
+  --color-accent-2: #27A614; /* sucesso */
+  --color-warning: #A67D03;  /* alerta */
+  --color-cta: #F28705;      /* acao/destaque - token novo, quinto slot */
+
+  /* Raio pequeno e consistente em toda a interface - nunca "pill" nem 0. */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* — escalas derivadas — */
+  --color-neutral-100: color-mix(in srgb, var(--color-text) 3.5%, var(--color-surface));
+  --color-neutral-200: color-mix(in srgb, var(--color-text) 6.5%, var(--color-surface));
+  --color-neutral-300: color-mix(in srgb, var(--color-text) 11%, var(--color-surface));
+  --color-neutral-400: color-mix(in srgb, var(--color-text) 18.5%, var(--color-surface));
+  --color-neutral-500: color-mix(in srgb, var(--color-text) 40%, var(--color-surface));
+  --color-neutral-600: color-mix(in srgb, var(--color-text) 60%, var(--color-surface));
+  --color-neutral-700: color-mix(in srgb, var(--color-text) 75%, var(--color-surface));
+  --color-neutral-800: color-mix(in srgb, var(--color-text) 88%, var(--color-surface));
+  --color-neutral-900: var(--color-text);
+
+  --color-accent-100: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+  --color-accent-200: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
+  --color-accent-300: color-mix(in srgb, var(--color-accent) 38%, var(--color-surface));
+  --color-accent-400: color-mix(in srgb, var(--color-accent) 62%, var(--color-surface));
+  --color-accent-500: var(--color-accent);
+  --color-accent-600: color-mix(in srgb, var(--color-accent) 89%, var(--color-text));
+  --color-accent-700: color-mix(in srgb, var(--color-accent) 70%, var(--color-text));
+  --color-accent-800: color-mix(in srgb, var(--color-accent) 52%, var(--color-text));
+
+  --color-accent-2-100: color-mix(in srgb, var(--color-accent-2) 10%, var(--color-surface));
+  --color-accent-2-800: color-mix(in srgb, var(--color-accent-2) 52%, var(--color-text));
+
+  --color-warning-100: color-mix(in srgb, var(--color-warning) 10%, var(--color-surface));
+  --color-warning-800: color-mix(in srgb, var(--color-warning) 52%, var(--color-text));
+
+  --color-cta-100: color-mix(in srgb, var(--color-cta) 10%, var(--color-surface));
+  --color-cta-600: color-mix(in srgb, var(--color-cta) 89%, var(--color-text));
+  --color-cta-800: color-mix(in srgb, var(--color-cta) 52%, var(--color-text));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg: #14161A;
+    --color-surface: #1C1F24;
+    --color-text: #ECECEC;
+    --color-divider: #2C3036;
+    --color-inverse-bg: #0A0B0D;
+    --color-inverse-text: #ECECEC;
+    --color-scrim: rgba(0, 0, 0, .65);
+    --shadow-color: 0, 0, 0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #14161A;
+  --color-surface: #1C1F24;
+  --color-text: #ECECEC;
+  --color-divider: #2C3036;
+  --color-inverse-bg: #0A0B0D;
+  --color-inverse-text: #ECECEC;
+  --color-scrim: rgba(0, 0, 0, .65);
+  --shadow-color: 0, 0, 0;
+}
+
+/* Mesmo motivo do Restaurante: reset de elementos base dentro de @layer base
+   para que as classes utilitarias do Tailwind (camada "utilities") continuem
+   vencendo - unlayered sempre venceria layered, senao. */
+@layer base {
+html, body, #root { height: 100%; }
+body {
+  margin: 0; background: var(--color-bg); color: var(--color-text);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5; font-weight: 400;
+  -webkit-tap-highlight-color: transparent;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  line-height: 1.2; margin: 0 0 8px;
+}
+h1 { font-size: 26px; }
+h2 { font-size: 21px; }
+h3 { font-size: 17px; }
+p { margin: 0 0 10px; }
+a { color: var(--color-accent); text-decoration: none; }
+button { font-family: inherit; }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+}
+
+.text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+
+/* — layout mobile-first: navegacao inferior FIXA, nunca menu hamburguer — */
+.app-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+}
+.bottom-nav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-divider);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 20;
+}
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 0 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-neutral-500);
+  text-decoration: none;
+}
+.bottom-nav-item[aria-current="page"] {
+  color: var(--color-accent);
+}
+
+/* — buttons — sem gradiente, sem sombra flutuante */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; text-decoration: none;
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 14px; line-height: 1.2; color: var(--color-text);
+  background: transparent; border: 1px solid transparent;
+  padding: 10px 16px; border-radius: var(--radius-md);
+}
+.btn svg { display: block; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary { background: var(--color-accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--color-accent-600); }
+.btn-primary:active:not(:disabled) { background: var(--color-accent-700); }
+.btn-cta { background: var(--color-cta); color: #fff; }
+.btn-cta:hover:not(:disabled) { background: var(--color-cta-600); }
+.btn-secondary { border-color: var(--color-divider); }
+.btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+.btn-block { width: 100%; justify-content: center; }
+
+/* — forms — */
+.field { margin-bottom: 14px; }
+.field > label { display: block; font-size: 13px; margin-bottom: 5px; color: color-mix(in srgb, var(--color-text) 70%, transparent); }
+.input {
+  width: 100%; min-height: 42px; padding: 8px 12px; font: inherit;
+  font-size: 15px; color: var(--color-text); caret-color: var(--color-accent);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider); border-radius: var(--radius-sm);
+}
+.input:focus { border-color: var(--color-accent); }
+
+/* — card — sem sombra flutuante, so borda */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+
+/* — badge de status — */
+.badge {
+  display: inline-flex; align-items: center;
+  font-size: 12px; font-weight: 600;
+  padding: 3px 9px; border-radius: var(--radius-sm);
+}
+.badge-pending { background: var(--color-warning-100); color: var(--color-warning-800); }
+.badge-success { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
+.badge-cta { background: var(--color-cta-100); color: var(--color-cta-800); }
+
+.alert {
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.alert-error { background: var(--color-warning-100); color: var(--color-warning-800); }

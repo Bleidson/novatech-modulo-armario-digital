@@ -1,0 +1,176 @@
+// Prisma schema - Armario Digital
+// Modulo de reserva de materiais/laboratorios por aula (Novatech Platform).
+// Segue o mesmo padrao arquitetural do modulo Restaurante: multi-tenant via Postgres
+// Row Level Security, tenantId lido de current_setting('app.tenant_id') (SET LOCAL
+// por requisicao, ver shared/prisma.ts), nunca passado na mao pela aplicacao.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  // url       -> role da APLICACAO (armario_app): nao e dona das tabelas nem
+  //              superuser, entao as policies de Row Level Security realmente
+  //              valem sobre ela.
+  // directUrl -> role DONA (armario_owner): usada so pelo Prisma Migrate (DDL +
+  //              shadow database). Nunca usada em runtime.
+  // Ver docker/postgres-init/01-roles-and-databases.sql.
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_MIGRATION_URL")
+}
+
+// Conjunto fechado de perfis - Administrador (via Core) e Professor (local, com
+// fluxo de aprovacao). Sem tela de administracao de perfis customizados nesta
+// fase, por isso enum em vez de tabela `roles` separada (mesmo padrao do
+// Restaurante).
+enum Role {
+  ADMIN
+  PROFESSOR
+}
+
+// Professor se cadastra sozinho (self-signup publico) e comeca PENDING - so pode
+// logar depois que um ADMIN aprova. REJECTED e um estado terminal (o cadastro foi
+// negado, nunca vira ACTIVE sozinho); SUSPENDED e para um professor ja aprovado que
+// precisa ser bloqueado depois (ex.: nao faz mais parte da escola). Administrador
+// (projecao local da Account da Core, ver upsertAdminProjection) sempre nasce ACTIVE
+// - o fluxo de aprovacao e exclusivo de Professor.
+enum UserStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  SUSPENDED
+}
+
+model User {
+  // Coluna de tenant (Novatech Platform). O default vem do PROPRIO banco, lido da
+  // variavel de sessao que withTenant()/a extensao do Prisma setam via SET LOCAL -
+  // por isso nenhum create() da aplicacao precisa informar tenantId na mao, e um
+  // create que "esquecesse" o tenant ainda assim nasce no tenant certo (ou e
+  // recusado pelo WITH CHECK da policy, nunca gravado no tenant errado).
+  tenantId     String     @default(dbgenerated("(current_setting('app.tenant_id'))::uuid")) @map("tenant_id") @db.Uuid
+  id           String     @id @default(uuid())
+  name         String
+  email        String
+  phone        String?
+  passwordHash String     @map("password_hash")
+  role         Role
+  status       UserStatus @default(ACTIVE) @map("status")
+  // Preenchidos quando um ADMIN aprova/rejeita um cadastro de Professor - null para
+  // quem nunca passou por essa fila (ADMIN, ou Professor ainda PENDING).
+  approvedBy    String?   @map("approved_by")
+  approvedAt    DateTime? @map("approved_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  lastLoginAt   DateTime? @map("last_login_at")
+
+  sessions     Session[]
+  reservations Reservation[]
+
+  // Dois colegios diferentes podem perfeitamente ter um professor com o mesmo
+  // e-mail - a unicidade so faz sentido dentro do tenant, nunca global.
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([tenantId, role, status])
+  @@map("users")
+}
+
+// Sessao opaca stateful (mesma decisao de plataforma do Restaurante) - token
+// aleatorio em cookie httpOnly, validado a cada requisicao contra este registro
+// persistido (nunca JWT). Logout/desativacao de usuario revoga na hora.
+model Session {
+  tenantId   String    @default(dbgenerated("(current_setting('app.tenant_id'))::uuid")) @map("tenant_id") @db.Uuid
+  id         String    @id @default(uuid())
+  tokenHash  String    @unique @map("token_hash")
+  userId     String    @map("user_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  expiresAt  DateTime  @map("expires_at")
+  lastSeenAt DateTime  @default(now()) @map("last_seen_at")
+  revokedAt  DateTime? @map("revoked_at")
+  userAgent  String?   @map("user_agent")
+  ipAddress  String?   @map("ip_address")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // tokenHash continua unico GLOBALMENTE de proposito: a validacao de sessao busca
+  // pelo token antes de saber a que tenant ele pertence.
+  @@index([tenantId, userId])
+  @@map("sessions")
+}
+
+// Item reservavel - laboratorio, projetor, carrinho de notebooks, kit de materiais
+// etc. Recurso UNITARIO (nunca um "estoque" com quantidade): cada Material so pode
+// estar reservado uma vez por data+horario, ver Reservation.
+model Material {
+  tenantId    String   @default(dbgenerated("(current_setting('app.tenant_id'))::uuid")) @map("tenant_id") @db.Uuid
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String?  @map("image_url")
+  category    String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  reservations Reservation[]
+
+  @@index([tenantId])
+  @@index([tenantId, active])
+  @@map("materials")
+}
+
+// Horario/periodo de aula (ex.: "1o horario", "Manha - Aula 3") em que uma reserva
+// pode acontecer. Cadastrado pelo ADMIN, nao fixo no codigo - cada escola tem sua
+// propria grade.
+model ClassPeriod {
+  tenantId     String   @default(dbgenerated("(current_setting('app.tenant_id'))::uuid")) @map("tenant_id") @db.Uuid
+  id           String   @id @default(uuid())
+  name         String
+  startTime    String?  @map("start_time")
+  endTime      String?  @map("end_time")
+  displayOrder Int      @default(0) @map("display_order")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  reservations Reservation[]
+
+  @@index([tenantId])
+  @@index([tenantId, active])
+  @@map("class_periods")
+}
+
+// Reserva de um Material por um Professor, numa data e ClassPeriod especificos.
+// So existem reservas ATIVAS nesta tabela - cancelar e um DELETE (nao um soft
+// cancel), porque a unicidade abaixo e o que garante, no proprio banco, que dois
+// professores nunca reservam o mesmo material no mesmo horario (condicao de corrida
+// coberta pela constraint, nao so por logica de aplicacao). Um soft-cancel manteria
+// a linha "cancelada" ocupando o slot unico para sempre, impedindo re-reserva.
+model Reservation {
+  tenantId      String   @default(dbgenerated("(current_setting('app.tenant_id'))::uuid")) @map("tenant_id") @db.Uuid
+  id            String   @id @default(uuid())
+  materialId    String   @map("material_id")
+  classPeriodId String   @map("class_period_id")
+  professorId   String   @map("professor_id")
+  // @db.Date (nao DateTime completo): a reserva e por DIA, o horario do dia vem do
+  // ClassPeriod - guardar hora/minuto aqui so criaria formas diferentes de
+  // representar o mesmo dia (meia-noite UTC vs local) sem ganho nenhum.
+  date          DateTime @db.Date
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  material    Material    @relation(fields: [materialId], references: [id], onDelete: Restrict)
+  classPeriod ClassPeriod @relation(fields: [classPeriodId], references: [id], onDelete: Restrict)
+  professor   User        @relation(fields: [professorId], references: [id], onDelete: Restrict)
+
+  // A regra de negocio central do modulo: nao pode existir duas reservas do mesmo
+  // material, na mesma data, no mesmo horario. Reforcada aqui (nao so validada na
+  // service) para nunca depender de uma corrida ganha na aplicacao - o Postgres
+  // recusa a segunda gravacao concorrente, ponto.
+  @@unique([tenantId, materialId, date, classPeriodId])
+  @@index([tenantId])
+  @@index([tenantId, professorId])
+  @@index([tenantId, date])
+  @@map("reservations")
+}
