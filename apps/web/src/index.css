@@ -40,6 +40,14 @@
   --color-accent-2: #27A614; /* sucesso */
   --color-warning: #A67D03;  /* alerta */
   --color-cta: #F28705;      /* acao/destaque - token novo, quinto slot */
+  /* Sexto slot: estado "reservado" no calendario (Tarefa "Ajustes Visuais e
+     Operacionais" secao 2.2) - precisa ler como alerta/ocupado a distancia, o que
+     nenhuma das cores acima comunica (verde = positivo, dourado = atencao leve,
+     laranja = acao). Um vermelho terroso, escolhido para nao destoar da
+     temperatura quente do restante da paleta (nunca um vermelho puro generico
+     tipo #FF0000) - mesma logica de derivacao das demais (seed unica + escalas
+     100/800 via color-mix). */
+  --color-danger: #B23A2E;
 
   /* Raio pequeno e consistente em toda a interface - nunca "pill" nem 0. */
   --radius-sm: 6px;
@@ -75,6 +83,10 @@
   --color-cta-100: color-mix(in srgb, var(--color-cta) 10%, var(--color-surface));
   --color-cta-600: color-mix(in srgb, var(--color-cta) 89%, var(--color-text));
   --color-cta-800: color-mix(in srgb, var(--color-cta) 52%, var(--color-text));
+
+  --color-danger-100: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface));
+  --color-danger-300: color-mix(in srgb, var(--color-danger) 30%, var(--color-surface));
+  --color-danger-800: color-mix(in srgb, var(--color-danger) 55%, var(--color-text));
 }
 
 @media (prefers-color-scheme: dark) {
@@ -129,12 +141,24 @@ button { font-family: inherit; }
 
 .text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
 
-/* — layout mobile-first: navegacao inferior FIXA, nunca menu hamburguer — */
+/* — layout responsivo: navegacao inferior FIXA no mobile, sidebar lateral FIXA a
+   partir do breakpoint de desktop - as duas NUNCA coexistem (Tarefa "Ajustes
+   Visuais e Operacionais" secao 4). Breakpoint em 1100px = mesma referencia
+   citada na tarefa para o protótipo anexado. Troca e so por CSS (@media), sem
+   listener de resize nem duplicacao de logica de rota ativa - Sidebar e
+   BottomNav sao SEMPRE renderizadas no DOM (ver AdminLayout.tsx/
+   ProfessorLayout.tsx), so uma delas fica visivel por vez. */
 .app-shell {
   min-height: 100%;
   display: flex;
   flex-direction: column;
   padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 .app-main {
   flex: 1;
@@ -142,6 +166,13 @@ button { font-family: inherit; }
   max-width: 640px;
   margin: 0 auto;
   padding: 16px;
+}
+.page-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-divider);
 }
 .bottom-nav {
   position: fixed;
@@ -167,6 +198,54 @@ button { font-family: inherit; }
 }
 .bottom-nav-item[aria-current="page"] {
   color: var(--color-accent);
+}
+
+.sidebar {
+  display: none;
+}
+
+@media (min-width: 1100px) {
+  .app-shell {
+    padding-bottom: 0;
+    padding-left: 224px;
+  }
+  .bottom-nav {
+    display: none;
+  }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 224px;
+    background: var(--color-surface);
+    border-right: 1px solid var(--color-divider);
+    padding: 20px 12px;
+    z-index: 20;
+  }
+  .sidebar nav {
+    display: grid;
+    gap: 4px;
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-neutral-600);
+    text-decoration: none;
+  }
+  .sidebar-item svg { flex: none; }
+  .sidebar-item[aria-current="page"] {
+    background: var(--color-accent-100);
+    color: var(--color-accent-700);
+  }
+  .app-main {
+    max-width: 960px;
+  }
 }
 
 /* — buttons — sem gradiente, sem sombra flutuante */
@@ -235,3 +314,267 @@ button.badge:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 .alert-error { background: var(--color-warning-100); color: var(--color-warning-800); }
 .alert-success { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Materiais (professor) - vitrine de cards. Referencia visual: MaterialCard do
+   prototipo anexado. So mostra, nunca reserva direto daqui (Tarefa secao 1).
+   ══════════════════════════════════════════════════════════════════════════ */
+.material-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+.material-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.material-card-media {
+  aspect-ratio: 16 / 10;
+  background: var(--color-neutral-100);
+}
+.material-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.material-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--color-neutral-400);
+}
+.material-card-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.material-card-body h3 { margin: 0; font-size: 14px; }
+.material-card-body p {
+  margin: 0;
+  font-size: 12.5px;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  flex: 1;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Calendario semanal do material - referencia visual: Calendar/.calgrid/.slot/
+   .reservebar do prototipo anexado (Tarefa secao 2).
+   ══════════════════════════════════════════════════════════════════════════ */
+.calendar-back {
+  background: transparent;
+  border: none;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  margin-bottom: 14px;
+  cursor: pointer;
+}
+.calendar-title-line {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.calendar-title-image {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  flex: none;
+}
+.calendar-title-image-placeholder {
+  display: grid;
+  place-items: center;
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-400);
+}
+.calendar-title-line h1 { margin: 0 0 2px; font-size: 19px; }
+.calendar-title-line p { margin: 0; }
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.week-nav button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  color: var(--color-neutral-600);
+  cursor: pointer;
+}
+.week-nav b { font-size: 12px; flex: 1; text-align: center; }
+.week-nav-jump-wrap { position: relative; display: inline-flex; }
+.week-nav-date-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  border: 0;
+  padding: 0;
+}
+
+.legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.legend span {
+  font-size: 11px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.legend i { width: 9px; height: 9px; border-radius: 3px; display: block; }
+.legend-free { background: var(--color-neutral-200); }
+.legend-busy { background: var(--color-danger-300); }
+.legend-past { background: var(--color-neutral-100); }
+.legend-selected { background: var(--color-accent-300); }
+
+.calendarwrap {
+  overflow: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+}
+.calgrid {
+  display: grid;
+  grid-template-columns: 84px repeat(5, minmax(110px, 1fr));
+  min-width: 640px;
+}
+.corner, .dayhead, .time, .slot {
+  border-right: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+}
+.corner {
+  padding: 10px;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: var(--color-neutral-500);
+  background: var(--color-neutral-100);
+}
+.dayhead {
+  padding: 10px;
+  text-align: center;
+  background: var(--color-neutral-100);
+}
+.dayhead b { display: block; font-size: 9px; color: var(--color-neutral-600); }
+.dayhead span { display: block; font-size: 11px; font-weight: 700; margin-top: 2px; }
+.time {
+  padding: 8px;
+  background: var(--color-neutral-100);
+  text-align: center;
+}
+.time b { display: block; font-size: 10px; }
+.time span { display: block; font-size: 9px; color: var(--color-neutral-500); margin-top: 2px; }
+
+.slot {
+  min-height: 58px;
+  padding: 6px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  background: var(--color-surface);
+  cursor: pointer;
+}
+.slot span { font-size: 9px; color: var(--color-neutral-500); }
+.slot b { font-size: 9px; }
+.slot-free:hover { background: var(--color-neutral-100); }
+.slot-selected {
+  background: var(--color-accent-100);
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+.slot-selected svg { color: var(--color-accent-700); }
+.slot-selected b { color: var(--color-accent-700); }
+.slot-busy-mine, .slot-busy-other {
+  background: var(--color-danger-100);
+}
+.slot-busy-mine span, .slot-busy-other span { color: color-mix(in srgb, var(--color-danger) 65%, var(--color-text)); }
+.slot-busy-mine b, .slot-busy-other b { color: var(--color-danger-800); }
+.slot-past {
+  background: var(--color-neutral-100);
+  cursor: not-allowed;
+}
+
+.reservebar {
+  position: sticky;
+  bottom: calc(64px + env(safe-area-inset-bottom) + 10px);
+  margin-top: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  z-index: 15;
+}
+.reservebar b { display: block; font-size: 12px; }
+.reservebar span { display: block; font-size: 10.5px; color: color-mix(in srgb, var(--color-text) 55%, transparent); margin-top: 2px; }
+.reservebar button {
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 9px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  flex: none;
+}
+.reservebar button:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (min-width: 1100px) {
+  .reservebar { bottom: 16px; }
+}
+
+/* — modal de negociacao — */
+.modal-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--color-scrim);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 30;
+}
+.modal-box {
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-divider);
+  padding: 18px;
+}
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-head h3 { margin: 0; }

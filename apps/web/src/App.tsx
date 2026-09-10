@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AuthProvider, RequireRole } from "./lib/auth";
+import { ThemeProvider } from "./lib/theme";
 
 import { Login } from "./routes/Login";
 import { Signup } from "./routes/Signup";
@@ -13,12 +14,14 @@ import { Materials } from "./routes/admin/Materials";
 import { ClassPeriods } from "./routes/admin/ClassPeriods";
 
 import { ProfessorLayout } from "./routes/professor/ProfessorLayout";
-import { Catalog } from "./routes/professor/Catalog";
+import { Materials as ProfessorMaterials } from "./routes/professor/Materials";
+import { Calendar } from "./routes/professor/Calendar";
 import { MyReservations } from "./routes/professor/MyReservations";
 
 export function App() {
   return (
     <ErrorBoundary>
+      <ThemeProvider>
       <BrowserRouter>
         <AuthProvider>
           <Routes>
@@ -47,7 +50,8 @@ export function App() {
                 </RequireRole>
               }
             >
-              <Route index element={<Catalog />} />
+              <Route index element={<ProfessorMaterials />} />
+              <Route path="calendario/:materialId" element={<Calendar />} />
               <Route path="reservas" element={<MyReservations />} />
               <Route path="conta" element={<Placeholder title="Conta" />} />
             </Route>
@@ -56,6 +60,7 @@ export function App() {
           </Routes>
         </AuthProvider>
       </BrowserRouter>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

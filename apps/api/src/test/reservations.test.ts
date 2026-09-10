@@ -18,9 +18,15 @@ const app = createApp();
 // este teste verifica. A sessao criada aqui e validada pelo MESMO
 // validateSessionToken que uma sessao "de verdade" usaria - nao e um atalho que
 // pula a autenticacao, so pula o formulario de login.
-async function createProfessorSession(tenantId: string, email: string, name?: string) {
+async function createProfessorSession(tenantId: string, email: string, name?: string, phone?: string) {
   const { user } = await runWithTenantContext(tenantId, async () =>
-    createUserFixture({ email, role: "PROFESSOR", status: "ACTIVE", ...(name ? { name } : {}) }),
+    createUserFixture({
+      email,
+      role: "PROFESSOR",
+      status: "ACTIVE",
+      ...(name ? { name } : {}),
+      ...(phone ? { phone } : {}),
+    }),
   );
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000);
@@ -251,7 +257,12 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     expect(adminCancel.status).toBe(204);
   });
 
-  it("GET /availability: mostra reserved:true/false por slot, sem vazar nome de outro professor para PROFESSOR", async () => {
+  // Ajuste de produto (Tarefa "Ajustes Visuais e Operacionais" secao 2.2/2.4): a
+  // grade do Calendario agora mostra "Reservado - Prof. Fulano" para QUALQUER
+  // papel (antes so ADMIN via, ver git blame) - a propria interacao de negociar
+  // depende de saber quem procurar. O telefone continua nunca vindo aqui (ver o
+  // teste de negotiate-contact abaixo), so o nome e o id da reserva.
+  it("GET /availability: mostra reserved:true/false e quem reservou (nome), para qualquer papel - nunca o telefone", async () => {
     const material = await runWithTenantContext(TENANT_A, async () => createMaterialFixture({ name: "Projetor" }));
     const classPeriod = await runWithTenantContext(TENANT_A, async () => createClassPeriodFixture({ name: "4o horario" }));
     const bookerName = "Professor Reservante";
@@ -274,17 +285,72 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     expect(availRes.status).toBe(200);
     const slot = availRes.body.data.find((s: { materialId: string; classPeriodId: string }) => s.materialId === material.id && s.classPeriodId === classPeriod.id);
     expect(slot.reserved).toBe(true);
-    expect(slot.reservedBy).toBeUndefined();
+    expect(slot.reservedBy.name).toBe(bookerName);
+    expect(slot.reservationId).toBe(created.body.data.id);
+    expect(JSON.stringify(slot)).not.toContain("999990000"); // nunca o telefone aqui
 
-    const { createAdminSessionFixture } = await import("./dbHelpers.js");
-    const { token: adminToken } = await runWithTenantContext(TENANT_A, async () => createAdminSessionFixture(TENANT_A));
-    const availAdmin = await request(app)
+    // filtro por materialId (usado pela tela de Calendario, que so quer a grade de
+    // UM material por vez).
+    const filtered = await request(app)
       .get("/api/v1/reservations/availability")
-      .query({ date })
+      .query({ date, materialId: material.id })
       .set("Host", HOST_A)
-      .set("Cookie", `pdp_admin_session=${adminToken}`);
-    const slotAdmin = availAdmin.body.data.find((s: { materialId: string; classPeriodId: string }) => s.materialId === material.id && s.classPeriodId === classPeriod.id);
-    expect(slotAdmin.reserved).toBe(true);
-    expect(slotAdmin.reservedBy.name).toBe(bookerName);
+      .set("Cookie", viewer.cookie);
+    expect(filtered.body.data.every((s: { materialId: string }) => s.materialId === material.id)).toBe(true);
+  });
+
+  // Ajuste de produto (Tarefa secao 2.4.3): unico ponto do backend que devolve um
+  // telefone de outro usuario - so no exato momento da negociacao, nunca antes.
+  describe("GET /:id/negotiate-contact", () => {
+    it("devolve o telefone do dono da reserva para outro professor", async () => {
+      const material = await runWithTenantContext(TENANT_A, async () => createMaterialFixture());
+      const classPeriod = await runWithTenantContext(TENANT_A, async () => createClassPeriodFixture());
+      const owner = await createProfessorSession(TENANT_A, "dono-negociacao@escola.example", undefined, "11977778888");
+      const requester = await createProfessorSession(TENANT_A, "pede-negociacao@escola.example");
+      const date = tomorrowISODate();
+
+      const created = await mutate("post", "/api/v1/reservations", owner).send({
+        materialId: material.id,
+        classPeriodId: classPeriod.id,
+        date,
+      });
+      const reservationId = created.body.data.id as string;
+
+      const res = await request(app)
+        .get(`/api/v1/reservations/${reservationId}/negotiate-contact`)
+        .set("Host", HOST_A)
+        .set("Cookie", requester.cookie);
+      expect(res.status).toBe(200);
+      expect(res.body.data.phone).toBe("11977778888");
+    });
+
+    it("recusa quando quem pede e o proprio dono da reserva", async () => {
+      const material = await runWithTenantContext(TENANT_A, async () => createMaterialFixture());
+      const classPeriod = await runWithTenantContext(TENANT_A, async () => createClassPeriodFixture());
+      const owner = await createProfessorSession(TENANT_A, "dono-proprio@escola.example");
+      const date = tomorrowISODate();
+
+      const created = await mutate("post", "/api/v1/reservations", owner).send({
+        materialId: material.id,
+        classPeriodId: classPeriod.id,
+        date,
+      });
+      const reservationId = created.body.data.id as string;
+
+      const res = await request(app)
+        .get(`/api/v1/reservations/${reservationId}/negotiate-contact`)
+        .set("Host", HOST_A)
+        .set("Cookie", owner.cookie);
+      expect(res.status).toBe(409);
+    });
+
+    it("404 para reserva inexistente", async () => {
+      const requester = await createProfessorSession(TENANT_A, "pede-inexistente@escola.example");
+      const res = await request(app)
+        .get("/api/v1/reservations/00000000-0000-0000-0000-000000000000/negotiate-contact")
+        .set("Host", HOST_A)
+        .set("Cookie", requester.cookie);
+      expect(res.status).toBe(404);
+    });
   });
 });

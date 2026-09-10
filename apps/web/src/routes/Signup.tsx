@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 // Cadastro publico do Professor - sempre PENDING (ver auth.service.ts no backend).
 // Nunca loga automaticamente: so mostra a confirmacao e manda para o login, onde a
@@ -20,7 +21,7 @@ export function Signup() {
     setError(null);
     setSubmitting(true);
     try {
-      await api.post("/auth/signup", { name, email, phone: phone || undefined, password });
+      await api.post("/auth/signup", { name, email, phone, password });
       setDone(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Nao foi possivel enviar o cadastro. Tente novamente.");
@@ -45,6 +46,9 @@ export function Signup() {
 
   return (
     <div className="app-main" style={{ paddingTop: "8vh" }}>
+      <div style={{ position: "fixed", top: 16, right: 16 }}>
+        <ThemeToggle compact />
+      </div>
       <h1>Cadastro de professor</h1>
       <p className="text-muted">Seu acesso precisa ser aprovado pela coordenacao antes do primeiro login.</p>
 
@@ -67,8 +71,20 @@ export function Signup() {
           />
         </div>
         <div className="field">
-          <label htmlFor="phone">Telefone (opcional)</label>
-          <input id="phone" className="input" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <label htmlFor="phone">WhatsApp</label>
+          <input
+            id="phone"
+            className="input"
+            type="tel"
+            required
+            minLength={8}
+            placeholder="(00) 00000-0000"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+          <p className="text-muted" style={{ fontSize: 12, marginTop: 4 }}>
+            Usado para negociar horarios com outros professores quando necessario.
+          </p>
         </div>
         <div className="field">
           <label htmlFor="password">Senha</label>

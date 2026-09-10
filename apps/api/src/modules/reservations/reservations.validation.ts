@@ -21,6 +21,11 @@ export const listReservationsQuerySchema = z.object({
   date: dateOnlySchema.optional(),
 });
 
+// materialId opcional: a tela de Calendario (Tarefa "Ajustes Visuais e
+// Operacionais" secao 2) so precisa da grade de UM material por vez, para varios
+// dias da semana - sem o filtro, cada dia da semana baixaria a grade inteira de
+// TODOS os materiais so para usar uma fatia dela.
 export const availabilityQuerySchema = z.object({
   date: dateOnlySchema,
+  materialId: z.string().uuid().optional(),
 });

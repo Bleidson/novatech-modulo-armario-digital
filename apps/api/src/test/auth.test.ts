@@ -19,7 +19,7 @@ describe("auth - cadastro de professor (pending -> approve/reject)", () => {
     const signupRes = await request(app)
       .post("/api/v1/auth/signup")
       .set("Host", HOST_A)
-      .send({ name: "Professor Teste", email: "prof1@escola.example", password: "SenhaForte123" });
+      .send({ name: "Professor Teste", email: "prof1@escola.example", phone: "11999990001", password: "SenhaForte123" });
 
     expect(signupRes.status).toBe(201);
     expect(signupRes.body.data.status).toBe("PENDING");
@@ -36,7 +36,7 @@ describe("auth - cadastro de professor (pending -> approve/reject)", () => {
     await request(app)
       .post("/api/v1/auth/signup")
       .set("Host", HOST_A)
-      .send({ name: "Professor Teste", email: "prof2@escola.example", password: "SenhaForte123" });
+      .send({ name: "Professor Teste", email: "prof2@escola.example", phone: "11999990002", password: "SenhaForte123" });
 
     const { token: adminToken } = await createAdminSessionFixture();
 
@@ -76,7 +76,7 @@ describe("auth - cadastro de professor (pending -> approve/reject)", () => {
     await request(app)
       .post("/api/v1/auth/signup")
       .set("Host", HOST_A)
-      .send({ name: "Professor Teste", email: "prof3@escola.example", password: "SenhaForte123" });
+      .send({ name: "Professor Teste", email: "prof3@escola.example", phone: "11999990003", password: "SenhaForte123" });
 
     const { token: adminToken } = await createAdminSessionFixture();
     const pendingRes = await request(app)
@@ -104,7 +104,7 @@ describe("auth - cadastro de professor (pending -> approve/reject)", () => {
     await request(app)
       .post("/api/v1/auth/signup")
       .set("Host", HOST_A)
-      .send({ name: "Professor Teste", email: "prof4@escola.example", password: "SenhaForte123" });
+      .send({ name: "Professor Teste", email: "prof4@escola.example", phone: "11999990004", password: "SenhaForte123" });
 
     const { token: adminToken } = await createAdminSessionFixture();
     const pendingRes = await request(app)
@@ -131,5 +131,18 @@ describe("auth - cadastro de professor (pending -> approve/reject)", () => {
       .set("Host", HOST_A)
       .set("Cookie", `${SESSION_COOKIE_NAME}=${professorSessionCookie}`);
     expect(forbiddenRes.status).toBe(403);
+  });
+
+  // Ajuste de produto (Tarefa "Ajustes Visuais e Operacionais" secao 3): WhatsApp
+  // deixou de ser opcional - e o dado usado para montar o link de negociacao de
+  // horario entre professores.
+  it("cadastro sem WhatsApp e recusado (campo agora obrigatorio)", async () => {
+    const res = await request(app)
+      .post("/api/v1/auth/signup")
+      .set("Host", HOST_A)
+      .send({ name: "Professor Sem Whats", email: "prof5@escola.example", password: "SenhaForte123" });
+
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe("VALIDATION_ERROR");
   });
 });

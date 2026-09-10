@@ -16,3 +16,4 @@ reservationsRouter.get("/availability", asyncHandler(reservationsController.avai
 reservationsRouter.get("/", asyncHandler(reservationsController.list));
 reservationsRouter.post("/", asyncHandler(reservationsController.create));
 reservationsRouter.delete("/:id", asyncHandler(reservationsController.remove));
+reservationsRouter.get("/:id/negotiate-contact", asyncHandler(reservationsController.negotiateContact));

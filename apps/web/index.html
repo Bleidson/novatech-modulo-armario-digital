@@ -5,6 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Armario Digital</title>
     <meta name="theme-color" content="#1C8C0B" />
+
+    <!-- Tema antes da primeira pintura - sem este script, toda navegacao comecaria no
+         tema claro e piscaria para o escuro quando o React montasse. Precisa ser
+         inline e sincrono. A chave e a mesma de lib/theme.tsx - se mudar la, muda aqui. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("armario:theme");
+          var theme =
+            stored === "light" || stored === "dark"
+              ? stored
+              : window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {
+          /* armazenamento bloqueado (modo privativo): o CSS cai no prefers-color-scheme */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

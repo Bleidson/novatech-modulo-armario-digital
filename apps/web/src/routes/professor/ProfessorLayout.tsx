@@ -1,22 +1,30 @@
 import { Outlet } from "react-router-dom";
-import { Grid2x2, CalendarCheck2, UserCircle } from "lucide-react";
+import { Package, CalendarCheck2, UserCircle } from "lucide-react";
 import { BottomNav } from "../../components/BottomNav";
+import { Sidebar } from "../../components/Sidebar";
+import { PageHeader } from "../../components/PageHeader";
 
-// Casa das secoes do PROFESSOR. "Catalogo" (escolher material+horario+data) e
-// "Minhas Reservas" (agenda pessoal + cancelamento) sao responsabilidade da
-// Teammate C (reservations) - rotas ja existem aqui, so trocar o componente.
+// Casa das secoes do PROFESSOR. "Materiais" (vitrine de cards, ver Materials.tsx -
+// renomeado de "Catalogo", Tarefa "Ajustes Visuais e Operacionais" secao 1) e
+// "Minhas Reservas" (agenda pessoal + cancelamento).
 const NAV_ITEMS = [
-  { to: "/professor", label: "Catalogo", icon: Grid2x2 },
+  { to: "/professor", label: "Materiais", icon: Package },
   { to: "/professor/reservas", label: "Minhas reservas", icon: CalendarCheck2 },
   { to: "/professor/conta", label: "Conta", icon: UserCircle },
 ];
 
+// Mesmo padrao responsivo do AdminLayout - Sidebar/BottomNav sempre renderizadas,
+// o CSS decide qual aparece por breakpoint (index.css).
 export function ProfessorLayout() {
   return (
     <div className="app-shell">
-      <main className="app-main">
-        <Outlet />
-      </main>
+      <Sidebar items={NAV_ITEMS} />
+      <div className="app-content">
+        <PageHeader />
+        <main className="app-main">
+          <Outlet />
+        </main>
+      </div>
       <BottomNav items={NAV_ITEMS} />
     </div>
   );

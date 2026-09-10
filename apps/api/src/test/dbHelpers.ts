@@ -22,6 +22,7 @@ let fixtureCounter = 0;
 export async function createUserFixture(overrides: {
   name?: string;
   email?: string;
+  phone?: string;
   password?: string;
   role?: Role;
   status?: UserStatus;
@@ -34,6 +35,10 @@ export async function createUserFixture(overrides: {
     data: {
       name: overrides.name ?? `Usuario Teste ${fixtureCounter}`,
       email: overrides.email ?? `user${fixtureCounter}-${Date.now()}@test.local`,
+      // WhatsApp e obrigatorio no cadastro real (auth.validation.ts), mas a
+      // fixture nao passa pela validacao - default aqui evita que todo teste que
+      // nao se importa com telefone precise passar um na mao.
+      phone: overrides.phone ?? "11999990000",
       passwordHash,
       role: overrides.role ?? "PROFESSOR",
       status: overrides.status ?? "ACTIVE",

@@ -45,7 +45,7 @@ export async function signupProfessor(input: z.infer<typeof professorSignupSchem
     data: {
       name: input.name,
       email: input.email,
-      phone: input.phone ?? null,
+      phone: input.phone,
       passwordHash,
       role: "PROFESSOR",
       status: "PENDING",

@@ -104,25 +104,37 @@ interface AvailabilitySlot {
   classPeriodId: string;
   classPeriodName: string;
   reserved: boolean;
+  // reservationId: precisa vir junto para o calendario poder cancelar (se for do
+  // proprio professor) ou negociar (se for de outro) a partir da propria celula -
+  // sem ele o front so saberia "esta ocupado", nunca QUAL reserva.
+  reservationId?: string;
   reservedBy?: { id: string; name: string } | null;
 }
 
 // GET /availability?date=... - grade completa Material ativo x ClassPeriod ativo
-// para uma data, usada pelo catalogo do professor. "reservedBy" so entra na
-// resposta para ADMIN - um PROFESSOR nunca ve o nome de outro professor (vazamento
-// de privacidade entre colegas), so o booleano reserved.
+// para uma data, usada pela tela de Calendario do professor.
+//
+// Ajuste de produto (Tarefa "Ajustes Visuais e Operacionais" secao 2.2/2.4):
+// "reservedBy" (nome de quem reservou) agora aparece para QUALQUER papel, nao so
+// ADMIN - a propria grade do calendario precisa mostrar "Reservado - Prof. Fulano"
+// para todo mundo, e o fluxo de negociacao depende de saber quem procurar. O
+// numero de WhatsApp continua NUNCA vindo aqui (ver negotiateContact abaixo) - so
+// o nome, que ja e informacao publica dentro da propria grade (mesma logica de um
+// quadro de horarios físico na sala dos professores).
 export async function getAvailability(
-  caller: Caller,
+  _caller: Caller,
   query: z.infer<typeof availabilityQuerySchema>,
 ): Promise<AvailabilitySlot[]> {
   const date = parseDateOnly(query.date);
-  const isAdmin = caller.role === "ADMIN";
 
   const [materials, classPeriods, reservations] = await Promise.all([
-    prisma.material.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    prisma.material.findMany({
+      where: { active: true, ...(query.materialId ? { id: query.materialId } : {}) },
+      orderBy: { name: "asc" },
+    }),
     prisma.classPeriod.findMany({ where: { active: true }, orderBy: { displayOrder: "asc" } }),
     prisma.reservation.findMany({
-      where: { date },
+      where: { date, ...(query.materialId ? { materialId: query.materialId } : {}) },
       include: { professor: { select: { id: true, name: true } } },
     }),
   ]);
@@ -142,14 +154,51 @@ export async function getAvailability(
         classPeriodId: classPeriod.id,
         classPeriodName: classPeriod.name,
         reserved: Boolean(reservation),
-        ...(isAdmin
-          ? { reservedBy: reservation ? { id: reservation.professor.id, name: reservation.professor.name } : null }
+        ...(reservation
+          ? {
+              reservationId: reservation.id,
+              reservedBy: { id: reservation.professor.id, name: reservation.professor.name },
+            }
           : {}),
       });
     }
   }
 
   return slots;
+}
+
+export interface NegotiateContact {
+  phone: string;
+}
+
+// GET /:id/negotiate-contact - unico ponto de todo o backend que devolve um
+// WhatsApp de outro usuario. Existe separado de getAvailability/listReservations
+// (que nunca incluem telefone) de proposito: so e chamado no exato momento em que
+// o professor confirma que quer negociar (ver Tarefa secao 2.4) - "buscado apenas
+// no momento de montar o link", nunca antes, nunca embutido numa listagem geral.
+//
+// Quem pode chamar: qualquer usuario autenticado que NAO seja o dono da reserva -
+// negociar com si mesmo nao faz sentido (a acao correta ali e cancelar).
+export async function getNegotiateContact(caller: Caller, reservationId: string): Promise<NegotiateContact> {
+  const reservation = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    include: { professor: { select: { phone: true } } },
+  });
+
+  if (!reservation) {
+    throw AppError.notFound("Reserva nao encontrada.");
+  }
+  if (reservation.professorId === caller.id) {
+    throw AppError.conflict("Esta e a sua propria reserva - use cancelar em vez de negociar.");
+  }
+  if (!reservation.professor.phone) {
+    // So pode acontecer com dado antigo, de antes do WhatsApp virar obrigatorio no
+    // cadastro (ver auth.validation.ts) - nunca com um professor cadastrado depois
+    // deste ajuste.
+    throw AppError.validation("Este professor nao tem WhatsApp cadastrado.");
+  }
+
+  return { phone: reservation.professor.phone };
 }
 
 // DELETE /:id - cancelar = apagar a linha (ver schema.prisma). So o professor dono

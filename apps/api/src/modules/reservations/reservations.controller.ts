@@ -37,3 +37,14 @@ export async function remove(req: Request, res: Response) {
   await reservationsService.cancelReservation({ id: req.user!.id, role: req.user!.role }, id);
   res.status(204).send();
 }
+
+// GET /:id/negotiate-contact - ver reservations.service.ts getNegotiateContact
+// para a regra completa. O frontend deve usar o {phone} devolvido aqui SO para
+// montar o href do wa.me na hora (window.location.href) - nunca renderiza-lo como
+// texto visivel na tela (Tarefa "Ajustes Visuais e Operacionais" secao 2.4.3).
+export async function negotiateContact(req: Request, res: Response) {
+  const id = req.params["id"];
+  if (!id) throw AppError.validation();
+  const contact = await reservationsService.getNegotiateContact({ id: req.user!.id, role: req.user!.role }, id);
+  res.json({ success: true, data: contact });
+}

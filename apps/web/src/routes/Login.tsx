@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Navigate, Link, useLocation } from "react-router-dom";
 import { ApiError } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 export function Login() {
   const { login, user, status } = useAuth();
@@ -32,6 +33,9 @@ export function Login() {
 
   return (
     <div className="app-main" style={{ paddingTop: "15vh" }}>
+      <div style={{ position: "fixed", top: 16, right: 16 }}>
+        <ThemeToggle compact />
+      </div>
       <h1>Armario Digital</h1>
       <p className="text-muted">Entre com seu e-mail e senha.</p>
 
