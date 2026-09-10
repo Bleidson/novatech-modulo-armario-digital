@@ -13,6 +13,8 @@ import { Materials } from "./routes/admin/Materials";
 import { ClassPeriods } from "./routes/admin/ClassPeriods";
 
 import { ProfessorLayout } from "./routes/professor/ProfessorLayout";
+import { Catalog } from "./routes/professor/Catalog";
+import { MyReservations } from "./routes/professor/MyReservations";
 
 export function App() {
   return (
@@ -45,9 +47,8 @@ export function App() {
                 </RequireRole>
               }
             >
-              {/* Teammate C substitui os tres abaixo pelas paginas reais. */}
-              <Route index element={<Placeholder title="Catalogo" />} />
-              <Route path="reservas" element={<Placeholder title="Minhas reservas" />} />
+              <Route index element={<Catalog />} />
+              <Route path="reservas" element={<MyReservations />} />
               <Route path="conta" element={<Placeholder title="Conta" />} />
             </Route>
 
