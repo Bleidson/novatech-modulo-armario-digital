@@ -43,23 +43,30 @@ export async function createUserFixture(overrides: {
   return { user, password };
 }
 
+// BUG REAL encontrado pela Teammate B: o parametro `tenantId` era aceito mas nunca
+// usado - createUserFixture/prisma.session.create rodavam no contexto AMBIENTE
+// (o default do processo de teste, TENANT_A - ver setupEnv.ts), entao chamar
+// createAdminSessionFixture(TENANT_B) criava silenciosamente um admin no tenant A
+// mesmo assim. Corrigido envolvendo todo o corpo em runWithTenantContext(tenantId, ...).
 export async function createAdminSessionFixture(tenantId: string = TENANT_A) {
-  const { randomBytes, createHash } = await import("node:crypto");
-  const { user } = await createUserFixture({ role: "ADMIN", status: "ACTIVE" });
-  const token = randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000);
+  return runWithTenantContext(tenantId, async () => {
+    const { randomBytes, createHash } = await import("node:crypto");
+    const { user } = await createUserFixture({ role: "ADMIN", status: "ACTIVE" });
+    const token = randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000);
 
-  await prisma.session.create({
-    data: {
-      userId: user.id,
-      tokenHash: createHash("sha256").update(token).digest("hex"),
-      expiresAt,
-      userAgent: null,
-      ipAddress: null,
-    },
+    await prisma.session.create({
+      data: {
+        userId: user.id,
+        tokenHash: createHash("sha256").update(token).digest("hex"),
+        expiresAt,
+        userAgent: null,
+        ipAddress: null,
+      },
+    });
+
+    return { user, token };
   });
-
-  return { user, token };
 }
 
 export async function createMaterialFixture(overrides: { name?: string; active?: boolean } = {}) {
