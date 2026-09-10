@@ -211,6 +211,13 @@ button { font-family: inherit; }
   object-fit: contain;
   flex: none;
 }
+/* Tema escuro: logo-ceti-bg.jpg (fundo branco proprio, arte feita pra fundo
+   claro) - o arquivo e um retangulo reto, entao o raio de borda vem daqui,
+   nunca da arte em si. */
+.site-header-logo-boxed {
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
 .site-header-titles {
   display: flex;
   flex-direction: column;
@@ -398,21 +405,31 @@ button.badge:disabled { opacity: 0.6; cursor: not-allowed; }
    Materiais (professor) - vitrine de cards. Referencia visual: MaterialCard do
    prototipo anexado. So mostra, nunca reserva direto daqui (Tarefa secao 1).
    ══════════════════════════════════════════════════════════════════════════ */
+/* 2 colunas fixas por padrao (mobile-first, pedido explicito: "grid de 2 por
+   linha") - cards menores que o antigo layout de 1 coluna. A partir do
+   breakpoint de desktop (mesmo ~1100px do resto do modulo), auto-fill aproveita
+   a largura extra da sidebar sem forcar so 2 colunas numa tela grande. */
 .material-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (min-width: 1100px) {
+  .material-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 14px;
+  }
 }
 .material-card {
   background: var(--color-surface);
   border: 1px solid var(--color-divider);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 .material-card-media {
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 4 / 3;
   background: var(--color-neutral-100);
 }
 .material-card-media img {
@@ -429,18 +446,26 @@ button.badge:disabled { opacity: 0.6; cursor: not-allowed; }
   color: var(--color-neutral-400);
 }
 .material-card-body {
-  padding: 14px;
+  padding: 9px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   flex: 1;
 }
-.material-card-body h3 { margin: 0; font-size: 14px; }
+.material-card-body h3 { margin: 0; font-size: 12.5px; line-height: 1.3; }
 .material-card-body p {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 11px;
   color: color-mix(in srgb, var(--color-text) 60%, transparent);
   flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.material-card-body .btn {
+  font-size: 10.5px;
+  padding: 7px 8px;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

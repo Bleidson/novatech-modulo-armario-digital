@@ -2,6 +2,7 @@ import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "../lib/auth";
+import { useTheme } from "../lib/theme";
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Coordenacao",
@@ -14,6 +15,7 @@ const ROLE_LABEL: Record<string, string> = {
 // ... o checkbox ficou isolado ... adicionar botao sair").
 export function Header() {
   const { user, logout } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   async function handleLogout() {
@@ -21,10 +23,23 @@ export function Header() {
     navigate("/login");
   }
 
+  // A arte da logo foi feita para fundo branco (logo-ceti.png e transparente,
+  // mas o desenho em si so "funciona" sobre claro) - no tema escuro ela fica
+  // desconexa flutuando sobre o fundo escuro do header. logo-ceti-bg.jpg ja traz
+  // o proprio fundo branco embutido; so precisa de raio de borda (o arquivo em
+  // si e um retangulo reto) para nao destoar do resto da interface, que nunca
+  // usa cantos vivos.
+  const isDark = theme === "dark";
+  const logoSrc = isDark ? "/logo-ceti-bg.jpg" : "/logo-ceti.png";
+
   return (
     <header className="site-header">
       <div className="site-header-brand">
-        <img src="/logo-ceti.png" alt="CETI Dr. Dionisio Rodrigues Nogueira" className="site-header-logo" />
+        <img
+          src={logoSrc}
+          alt="CETI Dr. Dionisio Rodrigues Nogueira"
+          className={isDark ? "site-header-logo site-header-logo-boxed" : "site-header-logo"}
+        />
         <div className="site-header-titles">
           <strong>Armario Digital</strong>
           <span>CETI Dr. Dionisio Rodrigues Nogueira</span>
