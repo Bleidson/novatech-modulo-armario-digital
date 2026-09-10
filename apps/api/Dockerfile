@@ -38,6 +38,13 @@ COPY --from=build /app/apps/api/package.json apps/api/package.json
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY --from=build /app/apps/api/prisma apps/api/prisma
 COPY --from=build /app/apps/api/tsconfig.json apps/api/tsconfig.json
+# prisma/seedAdmin.ts importa "../src/shared/..." e roda via "npx tsx" (nunca
+# compilado por tsc, rootDir "src" nao o inclui) - precisa do codigo-fonte
+# presente, nao so do dist. Mesmo padrao do modulo Restaurante
+# (prisma/seed.ts/seed-demo.ts, ver Dockerfile de la) - bug real encontrado
+# no primeiro deploy: sem isto o container entra em loop de crash
+# (ERR_MODULE_NOT_FOUND) porque o entrypoint roda esse script a cada boot.
+COPY --from=build /app/apps/api/src apps/api/src
 COPY apps/api/docker-entrypoint.sh apps/api/docker-entrypoint.sh
 # Windows/git nao preserva o bit de execucao (maquina de desenvolvimento deste
 # modulo e Windows) - garante executavel independente do checkout.
