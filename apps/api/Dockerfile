@@ -28,7 +28,8 @@ RUN npm run build --workspace=apps/api
 # (dirname(fileURLToPath(import.meta.url)) dentro de dist/lib/), entao tsc
 # nunca o copia sozinho. Sem este cp, o container sobe e cai na primeira
 # resolucao de tenant com ENOENT procurando tenants.dev.json em dist/lib/.
-RUN cp apps/api/src/lib/tenants.dev.json apps/api/dist/lib/tenants.dev.json
+RUN cp apps/api/src/lib/tenants.dev.json apps/api/dist/lib/tenants.dev.json \
+ && cp apps/api/src/lib/tenants.prod.json apps/api/dist/lib/tenants.prod.json
 
 FROM base AS runtime
 ENV NODE_ENV=production

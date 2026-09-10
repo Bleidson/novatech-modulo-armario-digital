@@ -1,0 +1,23 @@
+{
+  "_comment": [
+    "Fixture de producao do MockCoreClient - so existe enquanto CORE_API_URL nao",
+    "aponta pra uma Core real (ver docker-compose.production.yml). Diferente de",
+    "tenants.dev.json: o host aqui e o dominio PUBLICO real",
+    "(armario-digital.nthub.online), nao localhost/ceti.localhost."
+  ],
+  "tenants": [
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "slug": "ceti",
+      "status": "active",
+      "hosts": ["armario-digital.nthub.online"],
+      "settings": {
+        "logoUrl": null,
+        "primaryColor": "#1C8C0B",
+        "businessName": "CETI Dr. Dionisio Rodrigues Nogueira",
+        "phone": null,
+        "address": null
+      }
+    }
+  ]
+}
