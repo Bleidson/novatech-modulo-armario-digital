@@ -109,9 +109,39 @@ async function patch<T>(path: string, body?: unknown): Promise<T> {
   return envelope?.data as T;
 }
 
+async function put<T>(path: string, body?: unknown): Promise<T> {
+  const envelope = await raw(path, { method: "PUT", body });
+  return envelope?.data as T;
+}
+
 async function del<T>(path: string, body?: unknown): Promise<T> {
   const envelope = await raw(path, { method: "DELETE", body });
   return envelope?.data as T;
 }
 
-export const api = { get, post, patch, delete: del };
+// Upload de imagem de material (multipart/form-data) - unico endpoint da API que nao
+// manda JSON, por isso fora do helper `raw` acima (que sempre serializa o body em
+// JSON). Mesma regra de CSRF (double-submit cookie) das outras mutacoes.
+export async function uploadMaterialImage(file: File): Promise<{ url: string }> {
+  const csrf = readCookie("pdp_csrf");
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const res = await fetch(`${API_BASE_URL}/api/v1/uploads/material-image`, {
+    method: "POST",
+    credentials: "include",
+    headers: csrf ? { "X-CSRF-Token": csrf } : {},
+    body: formData,
+  });
+
+  const json = (await res.json().catch(() => null)) as Envelope | null;
+
+  if (!res.ok) {
+    const errorBody = json?.error ?? { code: "UNKNOWN_ERROR", message: "Nao foi possivel enviar a imagem." };
+    throw new ApiError(res.status, errorBody);
+  }
+
+  return json?.data as { url: string };
+}
+
+export const api = { get, post, put, patch, delete: del };

@@ -12,6 +12,8 @@ import { requireCsrfToken } from "./shared/middlewares/csrf.js";
 import { resolveTenant } from "./shared/middlewares/tenant.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { uploadsRouter } from "./modules/uploads/uploads.routes.js";
+import { materialsRouter } from "./modules/materials/materials.routes.js";
+import { classPeriodsRouter } from "./modules/classPeriods/classPeriods.routes.js";
 import { internalRouter } from "./modules/internal/internal.routes.js";
 import { UPLOADS_ROOT } from "./shared/uploadsDir.js";
 // Rotas de dominio adicionadas pelos teammates B (materiais, class-periods, painel
@@ -86,7 +88,8 @@ export function createApp() {
   // --- MODULOS DE DOMINIO ---------------------------------------------------
   app.use("/api/v1/auth", authRouter);
   app.use("/api/v1/uploads", uploadsRouter);
-  // Teammate B monta aqui: /api/v1/materials, /api/v1/class-periods
+  app.use("/api/v1/materials", materialsRouter);
+  app.use("/api/v1/class-periods", classPeriodsRouter);
   // Teammate C monta aqui: /api/v1/reservations
 
   app.use(notFoundHandler);

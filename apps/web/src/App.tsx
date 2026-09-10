@@ -8,6 +8,9 @@ import { Placeholder } from "./routes/Placeholder";
 
 import { AdminLayout } from "./routes/admin/AdminLayout";
 import { PendingApprovals } from "./routes/admin/PendingApprovals";
+import { Dashboard } from "./routes/admin/Dashboard";
+import { Materials } from "./routes/admin/Materials";
+import { ClassPeriods } from "./routes/admin/ClassPeriods";
 
 import { ProfessorLayout } from "./routes/professor/ProfessorLayout";
 
@@ -28,10 +31,9 @@ export function App() {
                 </RequireRole>
               }
             >
-              <Route index element={<Placeholder title="Painel" />} />
-              {/* Teammate B substitui os dois abaixo pelas paginas reais. */}
-              <Route path="materiais" element={<Placeholder title="Materiais" />} />
-              <Route path="horarios" element={<Placeholder title="Horarios" />} />
+              <Route index element={<Dashboard />} />
+              <Route path="materiais" element={<Materials />} />
+              <Route path="horarios" element={<ClassPeriods />} />
               <Route path="aprovacoes" element={<PendingApprovals />} />
             </Route>
 
