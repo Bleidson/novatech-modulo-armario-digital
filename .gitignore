@@ -1,7 +1,14 @@
 node_modules/
 dist/
-uploads/
-uploads-test/
+# Anchoradas com / no inicio - "uploads/" sem isso casa com QUALQUER diretorio
+# chamado "uploads" na arvore inteira, inclusive apps/api/src/modules/uploads/
+# (codigo-fonte real do modulo de upload, nao arquivo enviado por usuario). Bug
+# real ja cometido: essa pasta de codigo ficou fora do commit da Foundation
+# silenciosamente ate um teammate notar que o app nao compilava.
+/apps/api/uploads/
+/apps/api/uploads-test/
 .env
 !.env.example
 *.local.json
+# Worktrees dos teammates do Agent Team (infraestrutura do harness, nunca do repo).
+/.claude/
