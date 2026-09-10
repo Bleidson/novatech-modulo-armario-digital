@@ -217,6 +217,15 @@ button { font-family: inherit; }
 .badge-pending { background: var(--color-warning-100); color: var(--color-warning-800); }
 .badge-success { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
 .badge-cta { background: var(--color-cta-100); color: var(--color-cta-800); }
+/* Slot ja reservado (Armario Digital: catalogo do professor) - nao e erro nem
+   alerta, so um estado neutro "indisponivel". Usa a escala neutra (mesmo padrao
+   100/700 dos demais badges) em vez de emprestar warning/cta, que carregariam
+   um sentido (alerta/acao) que este estado nao tem. */
+.badge-taken { background: var(--color-neutral-200); color: var(--color-neutral-700); }
+/* Badge clicavel (slot livre no catalogo, ver Catalog.tsx) - reseta o botao nativo
+   pra parecer o mesmo badge, sem herdar borda/fundo padrao de <button>. */
+button.badge { border: none; cursor: pointer; font: inherit; }
+button.badge:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .alert {
   border-radius: var(--radius-sm);
@@ -225,3 +234,4 @@ button { font-family: inherit; }
   margin-bottom: 14px;
 }
 .alert-error { background: var(--color-warning-100); color: var(--color-warning-800); }
+.alert-success { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }

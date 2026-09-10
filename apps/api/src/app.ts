@@ -13,6 +13,7 @@ import { resolveTenant } from "./shared/middlewares/tenant.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { uploadsRouter } from "./modules/uploads/uploads.routes.js";
 import { internalRouter } from "./modules/internal/internal.routes.js";
+import { reservationsRouter } from "./modules/reservations/reservations.routes.js";
 import { UPLOADS_ROOT } from "./shared/uploadsDir.js";
 // Rotas de dominio adicionadas pelos teammates B (materiais, class-periods, painel
 // admin) e C (reservas, agenda do professor) - mount points ja reservados abaixo,
@@ -70,6 +71,12 @@ export function createApp() {
         tenantId: req.tenant?.id,
         slug: req.tenant?.slug,
         status: req.tenant?.status,
+        // Telefone da coordenacao (Core-provided, ver TenantInfo.settings em
+        // lib/core-client.ts) - mesmo dado publico de contato exibido em qualquer
+        // fachada da escola, sem risco em expor num endpoint sem auth. Usado pelo
+        // botao "falar com a coordenacao pelo WhatsApp" (Teammate C, catalogo/
+        // minhas reservas do professor).
+        phone: req.tenant?.settings.phone ?? null,
       },
     });
   });
@@ -87,7 +94,7 @@ export function createApp() {
   app.use("/api/v1/auth", authRouter);
   app.use("/api/v1/uploads", uploadsRouter);
   // Teammate B monta aqui: /api/v1/materials, /api/v1/class-periods
-  // Teammate C monta aqui: /api/v1/reservations
+  app.use("/api/v1/reservations", reservationsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
