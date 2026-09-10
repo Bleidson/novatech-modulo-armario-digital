@@ -82,10 +82,18 @@ services:
       DATABASE_URL: postgresql://armario_app:${POSTGRES_APP_PASSWORD}@postgres:5432/armario_prod?schema=public
       DATABASE_MIGRATION_URL: postgresql://armario_owner:${POSTGRES_OWNER_PASSWORD}@postgres:5432/armario_prod?schema=public
       SESSION_SECRET: ${SESSION_SECRET}
+      # Obrigatoria mesmo sem Core real ainda - autentica chamadas internas
+      # de entrada (/internal/*), independente de CORE_API_URL abaixo. So
+      # precisa ser o MESMO valor que a Core usa quando CORE_API_URL tambem
+      # estiver preenchido - ver .env.production.example.
       CORE_INTERNAL_TOKEN: ${CORE_INTERNAL_TOKEN}
-      # Alias fixo "novatech-core" na rede "platform" (compartilhada) - mesmo
-      # nome que o modulo Restaurante ja usa para a mesma finalidade.
-      CORE_API_URL: http://novatech-core:3400
+      # Vazia/ausente em .env.production -> MockCoreClient (modo local, mesmo
+      # comportamento do dev - login/cadastro/reservas funcionam, sem tenant
+      # real ainda). Preenchida (ex: http://novatech-core:3400, alias fixo na
+      # rede "platform" compartilhada, mesmo nome que o modulo Restaurante ja
+      # usa) -> integra com a Core real. Nunca hardcoded aqui de proposito -
+      # ver .env.production.example.
+      CORE_API_URL: ${CORE_API_URL:-}
       REDIS_URL: redis://redis:6379
       # Uploads persistem em volume nomeado (ver volumes abaixo) - o container
       # em si e descartavel a cada deploy novo.

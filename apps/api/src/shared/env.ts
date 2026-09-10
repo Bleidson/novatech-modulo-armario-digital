@@ -22,7 +22,16 @@ const envSchema = z.object({
   CORE_INTERNAL_TOKEN: z.string().min(16),
   // Endereco da Core real (HttpCoreClient, lib/core-client.ts). Ausente -> continua
   // MockCoreClient, exatamente como no Restaurante.
-  CORE_API_URL: z.string().url().optional(),
+  //
+  // preprocess trata "" como ausente, nao so "chave nunca definida" - docker
+  // compose SEMPRE define a chave no container quando ela aparece no bloco
+  // "environment", mesmo se a variavel de origem (.env.production) estiver
+  // vazia ou nao setada (vira string vazia, nunca "undefined" de verdade).
+  // Sem isto, rodar em modo local (Mock, sem Core real ainda) faz o processo
+  // recusar subir com CORE_API_URL="" falhando .url() - bug real encontrado
+  // montando o deploy de producao, nunca aparece em dev (onde a chave
+  // simplesmente nao existe no .env).
+  CORE_API_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
   CORE_CLIENT_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
   CORE_MOCK_TENANTS_FILE: z.string().optional(),
   // Cache de resolucao de tenant do HttpCoreClient - so conecta de fato quando
