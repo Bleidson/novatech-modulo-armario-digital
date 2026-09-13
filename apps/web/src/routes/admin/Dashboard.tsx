@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Package, CalendarClock, UserCheck } from "lucide-react";
 import { api, ApiError } from "../../lib/api";
+import { useTenantPath } from "../../lib/tenantPath";
 
 interface StatCard {
   label: string;
@@ -14,6 +15,7 @@ interface StatCard {
 // as mesmas listas que Materiais/Horarios/Aprovacoes ja consomem e conta no cliente
 // (.length), como pedido - nenhuma agregacao no backend so para isto.
 export function Dashboard() {
+  const tenantPath = useTenantPath();
   const [activeMaterials, setActiveMaterials] = useState<number | null>(null);
   const [activeClassPeriods, setActiveClassPeriods] = useState<number | null>(null);
   const [pendingApprovals, setPendingApprovals] = useState<number | null>(null);
@@ -37,9 +39,9 @@ export function Dashboard() {
   }, []);
 
   const cards: StatCard[] = [
-    { label: "Materiais ativos", value: activeMaterials, icon: Package, to: "/admin/materiais" },
-    { label: "Horarios ativos", value: activeClassPeriods, icon: CalendarClock, to: "/admin/horarios" },
-    { label: "Aprovacoes pendentes", value: pendingApprovals, icon: UserCheck, to: "/admin/aprovacoes" },
+    { label: "Materiais ativos", value: activeMaterials, icon: Package, to: tenantPath("/admin/materiais") },
+    { label: "Horarios ativos", value: activeClassPeriods, icon: CalendarClock, to: tenantPath("/admin/horarios") },
+    { label: "Aprovacoes pendentes", value: pendingApprovals, icon: UserCheck, to: tenantPath("/admin/aprovacoes") },
   ];
 
   return (

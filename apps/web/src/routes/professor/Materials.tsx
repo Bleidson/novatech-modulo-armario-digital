@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, ImageOff } from "lucide-react";
 import { api, ApiError, resolveUploadUrl } from "../../lib/api";
+import { useTenantPath } from "../../lib/tenantPath";
 
 interface Material {
   id: string;
@@ -20,6 +21,7 @@ interface Material {
 // professor (GET /materials?active=true, mesmo filtro que a API ja suporta).
 export function Materials() {
   const navigate = useNavigate();
+  const tenantPath = useTenantPath();
   const [materials, setMaterials] = useState<Material[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +58,7 @@ export function Materials() {
             <div className="material-card-body">
               <h3>{material.name}</h3>
               {material.description && <p>{material.description}</p>}
-              <button type="button" className="btn btn-primary btn-block" onClick={() => navigate(`/professor/calendario/${material.id}`)}>
+              <button type="button" className="btn btn-primary btn-block" onClick={() => navigate(tenantPath(`/professor/calendario/${material.id}`))}>
                 Ver calendario <ChevronRight size={16} />
               </button>
             </div>

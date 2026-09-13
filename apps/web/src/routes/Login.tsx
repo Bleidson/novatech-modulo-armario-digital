@@ -3,10 +3,12 @@ import { Navigate, Link, useLocation } from "react-router-dom";
 import { ApiError } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Header } from "../components/Header";
+import { useTenantPath } from "../lib/tenantPath";
 
 export function Login() {
   const { login, user, status } = useAuth();
   const location = useLocation();
+  const tenantPath = useTenantPath();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +16,7 @@ export function Login() {
 
   if (status === "authenticated" && user) {
     const from = (location.state as { from?: Location })?.from;
-    const fallback = user.role === "ADMIN" ? "/admin" : "/professor";
+    const fallback = tenantPath(user.role === "ADMIN" ? "/admin" : "/professor");
     return <Navigate to={from?.pathname ?? fallback} replace />;
   }
 
@@ -71,7 +73,7 @@ export function Login() {
       </form>
 
       <p className="text-muted" style={{ marginTop: 20, fontSize: 13 }}>
-        Ainda nao tem cadastro? <Link to="/cadastro">Cadastre-se como professor</Link>
+        Ainda nao tem cadastro? <Link to={tenantPath("/cadastro")}>Cadastre-se como professor</Link>
       </p>
       </div>
     </div>

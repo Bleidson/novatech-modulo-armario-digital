@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "../lib/auth";
 import { useTheme } from "../lib/theme";
+import { useTenantPath } from "../lib/tenantPath";
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Coordenacao",
@@ -17,10 +18,11 @@ export function Header() {
   const { user, logout } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const tenantPath = useTenantPath();
 
   async function handleLogout() {
     await logout();
-    navigate("/login");
+    navigate(tenantPath("/login"));
   }
 
   // A arte da logo foi feita para fundo branco (logo-ceti.png e transparente,

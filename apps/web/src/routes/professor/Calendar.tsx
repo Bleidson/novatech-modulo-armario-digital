@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { api, ApiError, resolveUploadUrl } from "../../lib/api";
 import { useAuth } from "../../lib/auth";
+import { useTenantPath } from "../../lib/tenantPath";
 
 interface Material {
   id: string;
@@ -107,6 +108,7 @@ interface NegotiationTarget {
 export function Calendar() {
   const { materialId } = useParams<{ materialId: string }>();
   const navigate = useNavigate();
+  const tenantPath = useTenantPath();
   const { user } = useAuth();
   const todayISO = useMemo(todayISODate, []);
 
@@ -319,7 +321,7 @@ export function Calendar() {
   if (!classPeriods || firstLoad) {
     return (
       <div>
-        <button type="button" className="btn" onClick={() => navigate("/professor")}>
+        <button type="button" className="btn" onClick={() => navigate(tenantPath("/professor"))}>
           <ChevronLeft size={16} /> Materiais
         </button>
         {error && <div className="alert alert-error">{error}</div>}
@@ -330,7 +332,7 @@ export function Calendar() {
 
   return (
     <div>
-      <button type="button" className="calendar-back" onClick={() => navigate("/professor")}>
+      <button type="button" className="calendar-back" onClick={() => navigate(tenantPath("/professor"))}>
         <ChevronLeft size={14} /> Materiais
       </button>
 

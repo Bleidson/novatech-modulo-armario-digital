@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { api } from "./api";
+import { useTenantPath } from "./tenantPath";
 
 export type Role = "ADMIN" | "PROFESSOR";
 
@@ -81,15 +82,16 @@ export function useAuth(): AuthContextValue {
 export function RequireRole({ roles, children }: { roles: Role[]; children: ReactNode }) {
   const { user, status } = useAuth();
   const location = useLocation();
+  const tenantPath = useTenantPath();
 
   if (status === "loading") {
     return <div className="p-8 text-center text-sm text-muted">Carregando...</div>;
   }
   if (status === "anonymous" || !user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to={tenantPath("/login")} state={{ from: location }} replace />;
   }
   if (!roles.includes(user.role)) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={tenantPath("/login")} replace />;
   }
   return <>{children}</>;
 }

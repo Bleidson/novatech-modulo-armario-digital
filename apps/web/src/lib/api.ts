@@ -8,6 +8,15 @@ export function resolveUploadUrl(url: string | null | undefined): string | null 
   return url ? `${API_BASE_URL}${url}` : null;
 }
 
+// Estrutura de dominio por path (decisao de 13/09/2026): o front vive em
+// "ntarmario.nthub.online/{slug}/..." - o slug e sempre o PRIMEIRO SEGMENTO
+// da URL, o mesmo :tenantSlug que a API espera em "/api/v1/:tenantSlug/...".
+// Nao ha Provider/contexto pra isto de proposito: e um dado do proprio
+// navegador (window.location), nao um estado de aplicacao.
+function currentTenantSlug(): string {
+  return window.location.pathname.split("/")[1] ?? "";
+}
+
 export interface ApiErrorBody {
   code: string;
   message: string;
@@ -75,7 +84,7 @@ async function raw(path: string, options: RequestOptions = {}): Promise<Envelope
     if (csrf) headers["X-CSRF-Token"] = csrf;
   }
 
-  const res = await fetch(`${API_BASE_URL}/api/v1${path}${buildQueryString(options.query)}`, {
+  const res = await fetch(`${API_BASE_URL}/api/v1/${currentTenantSlug()}${path}${buildQueryString(options.query)}`, {
     method,
     credentials: "include",
     headers,
@@ -127,7 +136,7 @@ export async function uploadMaterialImage(file: File): Promise<{ url: string }> 
   const formData = new FormData();
   formData.append("image", file);
 
-  const res = await fetch(`${API_BASE_URL}/api/v1/uploads/material-image`, {
+  const res = await fetch(`${API_BASE_URL}/api/v1/${currentTenantSlug()}/uploads/material-image`, {
     method: "POST",
     credentials: "include",
     headers: csrf ? { "X-CSRF-Token": csrf } : {},

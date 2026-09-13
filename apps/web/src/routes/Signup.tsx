@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
+import { useTenantPath } from "../lib/tenantPath";
 import { Header } from "../components/Header";
 
 // Cadastro publico do Professor - sempre PENDING (ver auth.service.ts no backend).
@@ -8,6 +9,7 @@ import { Header } from "../components/Header";
 // tentativa de entrar antes da aprovacao mostra a mensagem "aguardando aprovacao".
 export function Signup() {
   const navigate = useNavigate();
+  const tenantPath = useTenantPath();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -39,7 +41,7 @@ export function Signup() {
           <p className="text-muted">
             Seu cadastro foi enviado para a coordenacao. Voce vai poder entrar assim que ele for aprovado.
           </p>
-          <button type="button" className="btn btn-primary btn-block" onClick={() => navigate("/login")}>
+          <button type="button" className="btn btn-primary btn-block" onClick={() => navigate(tenantPath("/login"))}>
             Voltar para o login
           </button>
         </div>
@@ -106,7 +108,7 @@ export function Signup() {
       </form>
 
       <p className="text-muted" style={{ marginTop: 20, fontSize: 13 }}>
-        Ja tem cadastro aprovado? <Link to="/login">Entrar</Link>
+        Ja tem cadastro aprovado? <Link to={tenantPath("/login")}>Entrar</Link>
       </p>
       </div>
     </div>
