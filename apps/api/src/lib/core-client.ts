@@ -3,7 +3,6 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { prisma } from "../shared/prisma.js";
 import { logger } from "../shared/logger.js";
-import { normalizeHost } from "../shared/normalizeHost.js";
 import { env } from "../shared/env.js";
 import { getRedisClient } from "../shared/redisClient.js";
 import { CachedCoreClient } from "./cachedCoreClient.js";
@@ -47,9 +46,10 @@ export interface LoginResult {
 }
 
 export interface CoreClient {
-  // host SEMPRE ja normalizado (minusculas, sem porta) por quem chama
-  // (shared/middlewares/tenant.ts) - a Core nao normaliza.
-  resolveTenantByDomain(host: string): Promise<TenantInfo | null>;
+  // Estrutura de dominio por PATH (decisao de 13/09/2026): o Host identifica so
+  // o MODULO (ntarmario.nthub.online, fixo); quem identifica a escola e o
+  // PRIMEIRO SEGMENTO DO PATH, extraido em shared/middlewares/tenant.ts.
+  resolveTenantBySlug(slug: string): Promise<TenantInfo | null>;
   // SO a sessao do Administrador (a Account da Core) passa por aqui. Professor e
   // sessao 100% local do modulo (modules/auth/session.service.ts) - NUNCA chama
   // verifySession/login.
@@ -62,9 +62,7 @@ export interface CoreClient {
 
 // ---------------------------------------------------------------------------
 
-interface DevTenantRecord extends TenantInfo {
-  hosts: string[];
-}
+type DevTenantRecord = TenantInfo;
 
 function toTenantInfo(record: DevTenantRecord): TenantInfo {
   return { id: record.id, slug: record.slug, status: record.status, settings: record.settings };
@@ -98,9 +96,8 @@ export class MockCoreClient implements CoreClient {
     }
   }
 
-  resolveTenantByDomain(host: string): Promise<TenantInfo | null> {
-    const wanted = normalizeHost(host);
-    const found = this.tenants.find((t) => t.hosts.some((h) => normalizeHost(h) === wanted));
+  resolveTenantBySlug(slug: string): Promise<TenantInfo | null> {
+    const found = this.tenants.find((t) => t.slug === slug);
     return Promise.resolve(found ? toTenantInfo(found) : null);
   }
 
@@ -202,7 +199,7 @@ export class MockCoreClient implements CoreClient {
 // ---------------------------------------------------------------------------
 // HttpCoreClient - implementacao real, contra a Core de verdade. Formato de resposta
 // segue o MESMO contrato ja confirmado pelo modulo Restaurante contra a Core real
-// (novatech-core): resolveTenantByDomain, verifySession, login, logout, support-redeem.
+// (novatech-core): resolveTenantBySlug, verifySession, login, logout, support-redeem.
 // ---------------------------------------------------------------------------
 export class CoreClientError extends Error {
   readonly status: number;
@@ -247,8 +244,8 @@ export class HttpCoreClient implements CoreClient {
     }
   }
 
-  async resolveTenantByDomain(host: string): Promise<TenantInfo | null> {
-    const res = await this.request(`/api/tenants/by-domain?host=${encodeURIComponent(host)}`, {
+  async resolveTenantBySlug(slug: string): Promise<TenantInfo | null> {
+    const res = await this.request(`/api/tenants/by-slug?slug=${encodeURIComponent(slug)}`, {
       method: "GET",
     });
     if (res.status === 404) return null;

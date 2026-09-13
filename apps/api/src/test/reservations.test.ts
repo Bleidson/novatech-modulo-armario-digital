@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { createApp } from "../app.js";
 import { resetDb, createUserFixture, createMaterialFixture, createClassPeriodFixture } from "./dbHelpers.js";
-import { HOST_A, HOST_B, TENANT_A, TENANT_B } from "./tenants.js";
+import { SLUG_A, SLUG_B, TENANT_A, TENANT_B } from "./tenants.js";
 import { runWithTenantContext } from "../shared/tenantContext.js";
 import { prisma } from "../shared/prisma.js";
 import { SESSION_COOKIE_NAME, CSRF_COOKIE_NAME } from "../modules/auth/session.service.js";
@@ -49,8 +49,10 @@ async function createProfessorSession(tenantId: string, email: string, name?: st
   };
 }
 
-function mutate(method: "post" | "delete", path: string, auth: { cookie: string; csrfHeader: string }, host = HOST_A) {
-  return request(app)[method](path).set("Host", host).set("Cookie", auth.cookie).set("X-CSRF-Token", auth.csrfHeader);
+// `path` e o SUFIXO depois de "/api/v1/{slug}" (ex.: "/reservations") - nunca o
+// caminho completo, pra nao repetir o slug em toda chamada.
+function mutate(method: "post" | "delete", path: string, auth: { cookie: string; csrfHeader: string }, slug = SLUG_A) {
+  return request(app)[method](`/api/v1/${slug}${path}`).set("Cookie", auth.cookie).set("X-CSRF-Token", auth.csrfHeader);
 }
 
 // "Hoje"/"amanha"/"ontem" em data civil LOCAL (nunca via toISOString, que e UTC) -
@@ -89,7 +91,7 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     const prof = await createProfessorSession(TENANT_A, "prof-feliz@escola.example");
     const date = tomorrowISODate();
 
-    const createRes = await mutate("post", "/api/v1/reservations", prof).send({
+    const createRes = await mutate("post", "/reservations", prof).send({
       materialId: material.id,
       classPeriodId: classPeriod.id,
       date,
@@ -99,15 +101,15 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     expect(createRes.body.data.material.name).toBe("Projetor");
     expect(createRes.body.data.classPeriod.name).toBe("1o horario");
 
-    const listRes = await request(app).get("/api/v1/reservations").set("Host", HOST_A).set("Cookie", prof.cookie);
+    const listRes = await request(app).get(`/api/v1/${SLUG_A}/reservations`).set("Cookie", prof.cookie);
     expect(listRes.status).toBe(200);
     expect(listRes.body.data).toHaveLength(1);
 
     const reservationId = createRes.body.data.id as string;
-    const cancelRes = await mutate("delete", `/api/v1/reservations/${reservationId}`, prof);
+    const cancelRes = await mutate("delete", `/reservations/${reservationId}`, prof);
     expect(cancelRes.status).toBe(204);
 
-    const listAfter = await request(app).get("/api/v1/reservations").set("Host", HOST_A).set("Cookie", prof.cookie);
+    const listAfter = await request(app).get(`/api/v1/${SLUG_A}/reservations`).set("Cookie", prof.cookie);
     expect(listAfter.body.data).toHaveLength(0);
   });
 
@@ -127,8 +129,8 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     // primeira terminar, e o teste passaria mesmo se a aplicacao dependesse de um
     // "check then create" com janela de corrida.
     const [res1, res2] = await Promise.all([
-      mutate("post", "/api/v1/reservations", profA).send(body),
-      mutate("post", "/api/v1/reservations", profB).send(body),
+      mutate("post", "/reservations", profA).send(body),
+      mutate("post", "/reservations", profB).send(body),
     ]);
 
     const statuses = [res1.status, res2.status].sort();
@@ -152,7 +154,7 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     const classPeriod = await runWithTenantContext(TENANT_A, async () => createClassPeriodFixture());
     const prof = await createProfessorSession(TENANT_A, "passado@escola.example");
 
-    const res = await mutate("post", "/api/v1/reservations", prof).send({
+    const res = await mutate("post", "/reservations", prof).send({
       materialId: material.id,
       classPeriodId: classPeriod.id,
       date: yesterdayISODate(),
@@ -171,14 +173,14 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     const prof = await createProfessorSession(TENANT_A, "inativo@escola.example");
     const date = tomorrowISODate();
 
-    const resMaterial = await mutate("post", "/api/v1/reservations", prof).send({
+    const resMaterial = await mutate("post", "/reservations", prof).send({
       materialId: inactiveMaterial.id,
       classPeriodId: activeClassPeriod.id,
       date,
     });
     expect(resMaterial.status).toBe(422);
 
-    const resClassPeriod = await mutate("post", "/api/v1/reservations", prof).send({
+    const resClassPeriod = await mutate("post", "/reservations", prof).send({
       materialId: activeMaterial.id,
       classPeriodId: inactiveClassPeriod.id,
       date,
@@ -196,7 +198,7 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     const profB = await createProfessorSession(TENANT_B, "isolamento-b@escola.example");
     const date = tomorrowISODate();
 
-    const createA = await mutate("post", "/api/v1/reservations", profA).send({
+    const createA = await mutate("post", "/reservations", profA).send({
       materialId: materialA.id,
       classPeriodId: classPeriodA.id,
       date,
@@ -205,15 +207,15 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
 
     // Mesmo nome, mesma data, mesmo horario "de nome" - mas linha diferente
     // (tenant diferente), entao precisa funcionar sem 409.
-    const createB = await mutate("post", "/api/v1/reservations", profB, HOST_B).send({
+    const createB = await mutate("post", "/reservations", profB, SLUG_B).send({
       materialId: materialB.id,
       classPeriodId: classPeriodB.id,
       date,
     });
     expect(createB.status).toBe(201);
 
-    const listA = await request(app).get("/api/v1/reservations").set("Host", HOST_A).set("Cookie", profA.cookie);
-    const listB = await request(app).get("/api/v1/reservations").set("Host", HOST_B).set("Cookie", profB.cookie);
+    const listA = await request(app).get(`/api/v1/${SLUG_A}/reservations`).set("Cookie", profA.cookie);
+    const listB = await request(app).get(`/api/v1/${SLUG_B}/reservations`).set("Cookie", profB.cookie);
     expect(listA.body.data).toHaveLength(1);
     expect(listB.body.data).toHaveLength(1);
     expect(listA.body.data[0].id).not.toBe(listB.body.data[0].id);
@@ -226,7 +228,7 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     const other = await createProfessorSession(TENANT_A, "outro@escola.example");
     const date = tomorrowISODate();
 
-    const created = await mutate("post", "/api/v1/reservations", owner).send({
+    const created = await mutate("post", "/reservations", owner).send({
       materialId: material.id,
       classPeriodId: classPeriod.id,
       date,
@@ -234,14 +236,14 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     expect(created.status).toBe(201);
     const reservationId = created.body.data.id as string;
 
-    const forbidden = await mutate("delete", `/api/v1/reservations/${reservationId}`, other);
+    const forbidden = await mutate("delete", `/reservations/${reservationId}`, other);
     expect(forbidden.status).toBe(404);
 
-    const ownerCancel = await mutate("delete", `/api/v1/reservations/${reservationId}`, owner);
+    const ownerCancel = await mutate("delete", `/reservations/${reservationId}`, owner);
     expect(ownerCancel.status).toBe(204);
 
     // ADMIN cancela reserva de um professor.
-    const created2 = await mutate("post", "/api/v1/reservations", owner).send({
+    const created2 = await mutate("post", "/reservations", owner).send({
       materialId: material.id,
       classPeriodId: classPeriod.id,
       date,
@@ -251,8 +253,7 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     const { createAdminSessionFixture } = await import("./dbHelpers.js");
     const { token: adminToken } = await runWithTenantContext(TENANT_A, async () => createAdminSessionFixture(TENANT_A));
     const adminCancel = await request(app)
-      .delete(`/api/v1/reservations/${reservationId2}`)
-      .set("Host", HOST_A)
+      .delete(`/api/v1/${SLUG_A}/reservations/${reservationId2}`)
       .set("Cookie", `pdp_admin_session=${adminToken}`);
     expect(adminCancel.status).toBe(204);
   });
@@ -269,7 +270,7 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     const booker = await createProfessorSession(TENANT_A, "reservante@escola.example", bookerName);
     const date = tomorrowISODate();
 
-    const created = await mutate("post", "/api/v1/reservations", booker).send({
+    const created = await mutate("post", "/reservations", booker).send({
       materialId: material.id,
       classPeriodId: classPeriod.id,
       date,
@@ -278,9 +279,8 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
 
     const viewer = await createProfessorSession(TENANT_A, "consulta@escola.example");
     const availRes = await request(app)
-      .get("/api/v1/reservations/availability")
+      .get(`/api/v1/${SLUG_A}/reservations/availability`)
       .query({ date })
-      .set("Host", HOST_A)
       .set("Cookie", viewer.cookie);
     expect(availRes.status).toBe(200);
     const slot = availRes.body.data.find((s: { materialId: string; classPeriodId: string }) => s.materialId === material.id && s.classPeriodId === classPeriod.id);
@@ -292,9 +292,8 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     // filtro por materialId (usado pela tela de Calendario, que so quer a grade de
     // UM material por vez).
     const filtered = await request(app)
-      .get("/api/v1/reservations/availability")
+      .get(`/api/v1/${SLUG_A}/reservations/availability`)
       .query({ date, materialId: material.id })
-      .set("Host", HOST_A)
       .set("Cookie", viewer.cookie);
     expect(filtered.body.data.every((s: { materialId: string }) => s.materialId === material.id)).toBe(true);
   });
@@ -309,7 +308,7 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
       const requester = await createProfessorSession(TENANT_A, "pede-negociacao@escola.example");
       const date = tomorrowISODate();
 
-      const created = await mutate("post", "/api/v1/reservations", owner).send({
+      const created = await mutate("post", "/reservations", owner).send({
         materialId: material.id,
         classPeriodId: classPeriod.id,
         date,
@@ -317,8 +316,7 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
       const reservationId = created.body.data.id as string;
 
       const res = await request(app)
-        .get(`/api/v1/reservations/${reservationId}/negotiate-contact`)
-        .set("Host", HOST_A)
+        .get(`/api/v1/${SLUG_A}/reservations/${reservationId}/negotiate-contact`)
         .set("Cookie", requester.cookie);
       expect(res.status).toBe(200);
       expect(res.body.data.phone).toBe("11977778888");
@@ -330,7 +328,7 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
       const owner = await createProfessorSession(TENANT_A, "dono-proprio@escola.example");
       const date = tomorrowISODate();
 
-      const created = await mutate("post", "/api/v1/reservations", owner).send({
+      const created = await mutate("post", "/reservations", owner).send({
         materialId: material.id,
         classPeriodId: classPeriod.id,
         date,
@@ -338,8 +336,7 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
       const reservationId = created.body.data.id as string;
 
       const res = await request(app)
-        .get(`/api/v1/reservations/${reservationId}/negotiate-contact`)
-        .set("Host", HOST_A)
+        .get(`/api/v1/${SLUG_A}/reservations/${reservationId}/negotiate-contact`)
         .set("Cookie", owner.cookie);
       expect(res.status).toBe(409);
     });
@@ -347,8 +344,7 @@ describe("reservations - CRUD + regra de nao-duplicidade", () => {
     it("404 para reserva inexistente", async () => {
       const requester = await createProfessorSession(TENANT_A, "pede-inexistente@escola.example");
       const res = await request(app)
-        .get("/api/v1/reservations/00000000-0000-0000-0000-000000000000/negotiate-contact")
-        .set("Host", HOST_A)
+        .get(`/api/v1/${SLUG_A}/reservations/00000000-0000-0000-0000-000000000000/negotiate-contact`)
         .set("Cookie", requester.cookie);
       expect(res.status).toBe(404);
     });

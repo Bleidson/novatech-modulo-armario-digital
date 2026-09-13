@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { createApp } from "../app.js";
 import { resetDb, createAdminSessionFixture, createMaterialFixture, createUserFixture, createReservationFixture } from "./dbHelpers.js";
-import { HOST_A, HOST_B, TENANT_B } from "./tenants.js";
+import { SLUG_A, SLUG_B, TENANT_B } from "./tenants.js";
 import { SESSION_COOKIE_NAME, CSRF_COOKIE_NAME } from "../modules/auth/session.service.js";
 import { runWithTenantContext } from "../shared/tenantContext.js";
 
@@ -43,8 +43,7 @@ describe("modulo materials", () => {
     const adminCookie = `pdp_admin_session=${adminToken}`;
 
     const createRes = await request(app)
-      .post("/api/v1/materials")
-      .set("Host", HOST_A)
+      .post(`/api/v1/${SLUG_A}/materials`)
       .set("Cookie", adminCookie)
       .send({ name: "Projetor Epson", category: "Audiovisual" });
     expect(createRes.status).toBe(201);
@@ -52,36 +51,32 @@ describe("modulo materials", () => {
     expect(createRes.body.data.active).toBe(true);
     const id = createRes.body.data.id as string;
 
-    const getRes = await request(app).get(`/api/v1/materials/${id}`).set("Host", HOST_A).set("Cookie", adminCookie);
+    const getRes = await request(app).get(`/api/v1/${SLUG_A}/materials/${id}`).set("Cookie", adminCookie);
     expect(getRes.status).toBe(200);
     expect(getRes.body.data.category).toBe("Audiovisual");
 
     const updateRes = await request(app)
-      .put(`/api/v1/materials/${id}`)
-      .set("Host", HOST_A)
+      .put(`/api/v1/${SLUG_A}/materials/${id}`)
       .set("Cookie", adminCookie)
       .send({ description: "Projetor da sala de video" });
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.data.description).toBe("Projetor da sala de video");
 
     const deactivateRes = await request(app)
-      .post(`/api/v1/materials/${id}/deactivate`)
-      .set("Host", HOST_A)
+      .post(`/api/v1/${SLUG_A}/materials/${id}/deactivate`)
       .set("Cookie", adminCookie);
     expect(deactivateRes.status).toBe(200);
     expect(deactivateRes.body.data.active).toBe(false);
 
     const activateRes = await request(app)
-      .post(`/api/v1/materials/${id}/activate`)
-      .set("Host", HOST_A)
+      .post(`/api/v1/${SLUG_A}/materials/${id}/activate`)
       .set("Cookie", adminCookie);
     expect(activateRes.status).toBe(200);
     expect(activateRes.body.data.active).toBe(true);
 
     const listRes = await request(app)
-      .get("/api/v1/materials")
+      .get(`/api/v1/${SLUG_A}/materials`)
       .query({ active: "true" })
-      .set("Host", HOST_A)
       .set("Cookie", adminCookie);
     expect(listRes.status).toBe(200);
     expect((listRes.body.data as Array<{ id: string }>).some((m) => m.id === id)).toBe(true);
@@ -91,13 +86,12 @@ describe("modulo materials", () => {
     await createMaterialFixture({ name: "Carrinho de notebooks" });
     const { cookie: professorCookie, csrfHeader } = await createProfessorSessionCookie();
 
-    const listRes = await request(app).get("/api/v1/materials").set("Host", HOST_A).set("Cookie", professorCookie);
+    const listRes = await request(app).get(`/api/v1/${SLUG_A}/materials`).set("Cookie", professorCookie);
     expect(listRes.status).toBe(200);
     expect(listRes.body.data).toHaveLength(1);
 
     const createRes = await request(app)
-      .post("/api/v1/materials")
-      .set("Host", HOST_A)
+      .post(`/api/v1/${SLUG_A}/materials`)
       .set("Cookie", professorCookie)
       .set("X-CSRF-Token", csrfHeader)
       .send({ name: "Notebook extra" });
@@ -105,7 +99,7 @@ describe("modulo materials", () => {
   });
 
   it("requisicao sem sessao e recusada (401)", async () => {
-    const res = await request(app).get("/api/v1/materials").set("Host", HOST_A);
+    const res = await request(app).get(`/api/v1/${SLUG_A}/materials`);
     expect(res.status).toBe(401);
   });
 
@@ -118,8 +112,7 @@ describe("modulo materials", () => {
     const { token: adminTokenB } = await runWithTenantContext(TENANT_B, async () => createAdminSessionFixture(TENANT_B));
 
     const listResB = await request(app)
-      .get("/api/v1/materials")
-      .set("Host", HOST_B)
+      .get(`/api/v1/${SLUG_B}/materials`)
       .set("Cookie", `pdp_admin_session=${adminTokenB}`);
     expect(listResB.status).toBe(200);
     expect(listResB.body.data).toHaveLength(0);
@@ -131,8 +124,7 @@ describe("modulo materials", () => {
 
     const free = await createMaterialFixture({ name: "Sem reservas" });
     const deleteRes = await request(app)
-      .delete(`/api/v1/materials/${free.id}`)
-      .set("Host", HOST_A)
+      .delete(`/api/v1/${SLUG_A}/materials/${free.id}`)
       .set("Cookie", adminCookie);
     expect(deleteRes.status).toBe(204);
 
@@ -140,14 +132,12 @@ describe("modulo materials", () => {
     await createReservationFixture({ materialId: reserved.id });
 
     const blockedRes = await request(app)
-      .delete(`/api/v1/materials/${reserved.id}`)
-      .set("Host", HOST_A)
+      .delete(`/api/v1/${SLUG_A}/materials/${reserved.id}`)
       .set("Cookie", adminCookie);
     expect(blockedRes.status).toBe(409);
 
     const stillThereRes = await request(app)
-      .get(`/api/v1/materials/${reserved.id}`)
-      .set("Host", HOST_A)
+      .get(`/api/v1/${SLUG_A}/materials/${reserved.id}`)
       .set("Cookie", adminCookie);
     expect(stillThereRes.status).toBe(200);
   });

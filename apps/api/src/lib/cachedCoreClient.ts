@@ -4,8 +4,6 @@ import { logger } from "../shared/logger.js";
 export interface CacheStore {
   get(key: string): Promise<string | null>;
   set(key: string, value: string): Promise<unknown>;
-  sadd(key: string, member: string): Promise<unknown>;
-  smembers(key: string): Promise<string[]>;
   del(...keys: string[]): Promise<unknown>;
 }
 
@@ -14,14 +12,12 @@ interface CacheEntry {
   cachedAt: number;
 }
 
-const KEY_PREFIX = "core:tenant-by-domain:";
-const HOSTS_KEY_PREFIX = "core:tenant-hosts:";
+const KEY_PREFIX = "core:tenant-by-slug:";
 
-// Cache de resolucao de tenant por dominio - obrigatorio a partir do momento em que
+// Cache de resolucao de tenant por slug - obrigatorio a partir do momento em que
 // coreClient vira uma chamada HTTP de verdade. Se a Core nao responder (timeout, 5xx,
 // fora do ar), serve o ultimo valor conhecido em cache mesmo vencido, com log de
-// alerta - nunca derruba a operacao da escola por uma instabilidade da Core. Mesmo
-// padrao do modulo Restaurante.
+// alerta - nunca derruba a operacao da escola por uma instabilidade da Core.
 export class CachedCoreClient implements CoreClient {
   constructor(
     private readonly inner: CoreClient,
@@ -29,8 +25,8 @@ export class CachedCoreClient implements CoreClient {
     private readonly ttlMs: number,
   ) {}
 
-  async resolveTenantByDomain(host: string): Promise<TenantInfo | null> {
-    const key = KEY_PREFIX + host;
+  async resolveTenantBySlug(slug: string): Promise<TenantInfo | null> {
+    const key = KEY_PREFIX + slug;
     const cachedRaw = await this.store.get(key);
     const cached = cachedRaw ? (JSON.parse(cachedRaw) as CacheEntry) : null;
 
@@ -39,15 +35,14 @@ export class CachedCoreClient implements CoreClient {
     }
 
     try {
-      const fresh = await this.inner.resolveTenantByDomain(host);
+      const fresh = await this.inner.resolveTenantBySlug(slug);
       const entry: CacheEntry = { value: fresh, cachedAt: Date.now() };
       await this.store.set(key, JSON.stringify(entry));
-      if (fresh) await this.store.sadd(HOSTS_KEY_PREFIX + fresh.id, host);
       return fresh;
     } catch (err) {
       if (cached) {
         logger.warn(
-          { err, host, cachedAt: new Date(cached.cachedAt).toISOString() },
+          { err, slug, cachedAt: new Date(cached.cachedAt).toISOString() },
           "CORE_UNAVAILABLE_SERVING_STALE_TENANT_CACHE",
         );
         return cached.value;
@@ -72,12 +67,10 @@ export class CachedCoreClient implements CoreClient {
     return this.inner.logout(token);
   }
 
+  // Slug e ESTAVEL (nunca muda depois de criado) - diferente de Host, que podia
+  // ter varios valores por tenant (custom domain, subdominio). Invalidar por
+  // slug direto, sem precisar de um indice reverso tenantId -> slugs.
   async updateTenantSettings(tenantId: string, settings: Partial<TenantInfo["settings"]>): Promise<void> {
     await this.inner.updateTenantSettings(tenantId, settings);
-
-    const hosts = await this.store.smembers(HOSTS_KEY_PREFIX + tenantId);
-    if (hosts.length > 0) {
-      await this.store.del(...hosts.map((h) => KEY_PREFIX + h));
-    }
   }
 }

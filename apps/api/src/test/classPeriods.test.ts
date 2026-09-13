@@ -8,7 +8,7 @@ import {
   createUserFixture,
   createReservationFixture,
 } from "./dbHelpers.js";
-import { HOST_A, HOST_B, TENANT_B } from "./tenants.js";
+import { SLUG_A, SLUG_B, TENANT_B } from "./tenants.js";
 import { SESSION_COOKIE_NAME, CSRF_COOKIE_NAME } from "../modules/auth/session.service.js";
 import { runWithTenantContext } from "../shared/tenantContext.js";
 
@@ -48,8 +48,7 @@ describe("modulo class-periods", () => {
     const adminCookie = `pdp_admin_session=${adminToken}`;
 
     const createRes = await request(app)
-      .post("/api/v1/class-periods")
-      .set("Host", HOST_A)
+      .post(`/api/v1/${SLUG_A}/class-periods`)
       .set("Cookie", adminCookie)
       .send({ name: "1o horario", startTime: "07:00", endTime: "07:50" });
     expect(createRes.status).toBe(201);
@@ -58,30 +57,26 @@ describe("modulo class-periods", () => {
     const id = createRes.body.data.id as string;
 
     const getRes = await request(app)
-      .get(`/api/v1/class-periods/${id}`)
-      .set("Host", HOST_A)
+      .get(`/api/v1/${SLUG_A}/class-periods/${id}`)
       .set("Cookie", adminCookie);
     expect(getRes.status).toBe(200);
     expect(getRes.body.data.startTime).toBe("07:00");
 
     const updateRes = await request(app)
-      .put(`/api/v1/class-periods/${id}`)
-      .set("Host", HOST_A)
+      .put(`/api/v1/${SLUG_A}/class-periods/${id}`)
       .set("Cookie", adminCookie)
       .send({ endTime: "07:55" });
     expect(updateRes.status).toBe(200);
     expect(updateRes.body.data.endTime).toBe("07:55");
 
     const deactivateRes = await request(app)
-      .post(`/api/v1/class-periods/${id}/deactivate`)
-      .set("Host", HOST_A)
+      .post(`/api/v1/${SLUG_A}/class-periods/${id}/deactivate`)
       .set("Cookie", adminCookie);
     expect(deactivateRes.status).toBe(200);
     expect(deactivateRes.body.data.active).toBe(false);
 
     const activateRes = await request(app)
-      .post(`/api/v1/class-periods/${id}/activate`)
-      .set("Host", HOST_A)
+      .post(`/api/v1/${SLUG_A}/class-periods/${id}/activate`)
       .set("Cookie", adminCookie);
     expect(activateRes.status).toBe(200);
     expect(activateRes.body.data.active).toBe(true);
@@ -92,23 +87,20 @@ describe("modulo class-periods", () => {
     const { cookie: professorCookie, csrfHeader } = await createProfessorSessionCookie();
 
     const listRes = await request(app)
-      .get("/api/v1/class-periods")
-      .set("Host", HOST_A)
+      .get(`/api/v1/${SLUG_A}/class-periods`)
       .set("Cookie", professorCookie);
     expect(listRes.status).toBe(200);
     expect(listRes.body.data).toHaveLength(1);
 
     const createRes = await request(app)
-      .post("/api/v1/class-periods")
-      .set("Host", HOST_A)
+      .post(`/api/v1/${SLUG_A}/class-periods`)
       .set("Cookie", professorCookie)
       .set("X-CSRF-Token", csrfHeader)
       .send({ name: "3o horario" });
     expect(createRes.status).toBe(403);
 
     const reorderRes = await request(app)
-      .put("/api/v1/class-periods/reorder")
-      .set("Host", HOST_A)
+      .put(`/api/v1/${SLUG_A}/class-periods/reorder`)
       .set("Cookie", professorCookie)
       .set("X-CSRF-Token", csrfHeader)
       .send({ items: [] });
@@ -116,7 +108,7 @@ describe("modulo class-periods", () => {
   });
 
   it("requisicao sem sessao e recusada (401)", async () => {
-    const res = await request(app).get("/api/v1/class-periods").set("Host", HOST_A);
+    const res = await request(app).get(`/api/v1/${SLUG_A}/class-periods`);
     expect(res.status).toBe(401);
   });
 
@@ -129,8 +121,7 @@ describe("modulo class-periods", () => {
     const { token: adminTokenB } = await runWithTenantContext(TENANT_B, async () => createAdminSessionFixture(TENANT_B));
 
     const listResB = await request(app)
-      .get("/api/v1/class-periods")
-      .set("Host", HOST_B)
+      .get(`/api/v1/${SLUG_B}/class-periods`)
       .set("Cookie", `pdp_admin_session=${adminTokenB}`);
     expect(listResB.status).toBe(200);
     expect(listResB.body.data).toHaveLength(0);
@@ -143,8 +134,7 @@ describe("modulo class-periods", () => {
     const second = await createClassPeriodFixture({ name: "B", displayOrder: 2 });
 
     const res = await request(app)
-      .put("/api/v1/class-periods/reorder")
-      .set("Host", HOST_A)
+      .put(`/api/v1/${SLUG_A}/class-periods/reorder`)
       .set("Cookie", adminCookie)
       .send({ items: [{ id: first.id, displayOrder: 2 }, { id: second.id, displayOrder: 1 }] });
 
@@ -160,15 +150,13 @@ describe("modulo class-periods", () => {
     const period = await createClassPeriodFixture({ name: "Unico", displayOrder: 0 });
 
     const res = await request(app)
-      .put("/api/v1/class-periods/reorder")
-      .set("Host", HOST_A)
+      .put(`/api/v1/${SLUG_A}/class-periods/reorder`)
       .set("Cookie", adminCookie)
       .send({ items: [{ id: period.id, displayOrder: 9 }, { id: "00000000-0000-0000-0000-000000000000", displayOrder: 1 }] });
     expect(res.status).toBe(422);
 
     const getRes = await request(app)
-      .get(`/api/v1/class-periods/${period.id}`)
-      .set("Host", HOST_A)
+      .get(`/api/v1/${SLUG_A}/class-periods/${period.id}`)
       .set("Cookie", adminCookie);
     expect(getRes.body.data.displayOrder).toBe(0);
   });
@@ -179,8 +167,7 @@ describe("modulo class-periods", () => {
 
     const free = await createClassPeriodFixture({ name: "Sem reservas" });
     const deleteRes = await request(app)
-      .delete(`/api/v1/class-periods/${free.id}`)
-      .set("Host", HOST_A)
+      .delete(`/api/v1/${SLUG_A}/class-periods/${free.id}`)
       .set("Cookie", adminCookie);
     expect(deleteRes.status).toBe(204);
 
@@ -188,14 +175,12 @@ describe("modulo class-periods", () => {
     await createReservationFixture({ classPeriodId: reserved.id });
 
     const blockedRes = await request(app)
-      .delete(`/api/v1/class-periods/${reserved.id}`)
-      .set("Host", HOST_A)
+      .delete(`/api/v1/${SLUG_A}/class-periods/${reserved.id}`)
       .set("Cookie", adminCookie);
     expect(blockedRes.status).toBe(409);
 
     const stillThereRes = await request(app)
-      .get(`/api/v1/class-periods/${reserved.id}`)
-      .set("Host", HOST_A)
+      .get(`/api/v1/${SLUG_A}/class-periods/${reserved.id}`)
       .set("Cookie", adminCookie);
     expect(stillThereRes.status).toBe(200);
   });

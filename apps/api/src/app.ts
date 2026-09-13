@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Router } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
@@ -32,6 +32,29 @@ const generalRateLimiter = rateLimit({
   },
 });
 
+// Tudo que precisa de uma escola resolvida (publica ou autenticada) - montado sob
+// "/api/v1/:tenantSlug" (app.ts), nunca em host nenhum.
+const tenantScopedRouter = Router({ mergeParams: true });
+tenantScopedRouter.use(resolveTenant);
+
+tenantScopedRouter.get("/health", (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      tenantId: req.tenant?.id,
+      slug: req.tenant?.slug,
+      status: req.tenant?.status,
+      phone: req.tenant?.settings.phone ?? null,
+    },
+  });
+});
+
+tenantScopedRouter.use("/auth", authRouter);
+tenantScopedRouter.use("/uploads", uploadsRouter);
+tenantScopedRouter.use("/materials", materialsRouter);
+tenantScopedRouter.use("/class-periods", classPeriodsRouter);
+tenantScopedRouter.use("/reservations", reservationsRouter);
+
 export function createApp() {
   const app = express();
 
@@ -47,10 +70,6 @@ export function createApp() {
   app.use(requireCsrfToken);
   app.use("/uploads", express.static(UPLOADS_ROOT));
 
-  app.get("/api/v1/health", (_req, res) => {
-    res.json({ success: true, data: { status: "ok", env: env.NODE_ENV } });
-  });
-
   // Servidor-a-servidor com a Core (offboarding, manutencao, setup do wizard) - fora
   // de /api/v1 de proposito, nunca passa por resolveTenant nem pelo rate limiter de
   // trafego de usuario final.
@@ -58,26 +77,10 @@ export function createApp() {
 
   app.use("/api/v1", generalRateLimiter);
 
-  // Resolucao de tenant por dominio (Novatech Platform) - a partir daqui toda rota,
-  // publica ou autenticada, corre no contexto de uma escola especifica.
-  app.use("/api/v1", resolveTenant);
-
-  app.get("/api/v1/health/tenant", (req, res) => {
-    res.json({
-      success: true,
-      data: {
-        host: req.headers.host,
-        tenantId: req.tenant?.id,
-        slug: req.tenant?.slug,
-        status: req.tenant?.status,
-        // Telefone da coordenacao (Core-provided, ver TenantInfo.settings em
-        // lib/core-client.ts) - mesmo dado publico de contato exibido em qualquer
-        // fachada da escola, sem risco em expor num endpoint sem auth. Usado pelo
-        // botao "falar com a coordenacao pelo WhatsApp" (Teammate C, catalogo/
-        // minhas reservas do professor).
-        phone: req.tenant?.settings.phone ?? null,
-      },
-    });
+  // Health checks SEM tenant - ANTES do mount generico "/:tenantSlug" abaixo, de
+  // proposito (Express casa o primeiro middleware cujo padrao bate).
+  app.get("/api/v1/health", (_req, res) => {
+    res.json({ success: true, data: { status: "ok", env: env.NODE_ENV } });
   });
 
   app.get("/api/v1/health/db", async (_req, res, next) => {
@@ -89,12 +92,10 @@ export function createApp() {
     }
   });
 
-  // --- MODULOS DE DOMINIO ---------------------------------------------------
-  app.use("/api/v1/auth", authRouter);
-  app.use("/api/v1/uploads", uploadsRouter);
-  app.use("/api/v1/materials", materialsRouter);
-  app.use("/api/v1/class-periods", classPeriodsRouter);
-  app.use("/api/v1/reservations", reservationsRouter);
+  // Estrutura de dominio por PATH (decisao de 13/09/2026): o Host identifica so
+  // o MODULO (ntarmario.nthub.online, fixo); quem identifica a escola e o
+  // PRIMEIRO SEGMENTO DO PATH, extraido aqui e resolvido em resolveTenant.
+  app.use("/api/v1/:tenantSlug", tenantScopedRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

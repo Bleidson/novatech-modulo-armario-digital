@@ -1,16 +1,15 @@
 {
   "_comment": [
     "Fixture de producao do MockCoreClient - so existe enquanto CORE_API_URL nao",
-    "aponta pra uma Core real (ver docker-compose.production.yml). Diferente de",
-    "tenants.dev.json: o host aqui e o dominio PUBLICO real",
-    "(armario-digital.nthub.online), nao localhost/ceti.localhost."
+    "aponta pra uma Core real (ver docker-compose.production.yml). Estrutura de",
+    "dominio por PATH (decisao de 13/09/2026): resolucao e por SLUG, nunca por",
+    "Host - o dominio publico agora e ntarmario.nthub.online/ceti."
   ],
   "tenants": [
     {
       "id": "11111111-1111-1111-1111-111111111111",
       "slug": "ceti",
       "status": "active",
-      "hosts": ["armario-digital.nthub.online"],
       "settings": {
         "logoUrl": null,
         "primaryColor": "#1C8C0B",

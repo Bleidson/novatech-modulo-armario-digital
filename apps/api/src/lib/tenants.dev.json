@@ -3,18 +3,18 @@
     "Tenants de desenvolvimento do MockCoreClient. Enquanto a Core API nao existe",
     "integrada a este modulo, este arquivo faz o papel do cadastro de tenants.",
     "",
-    "Dois de proposito: com um unico tenant de teste, um vazamento entre escolas e",
+    "Tres de proposito: com um unico tenant de teste, um vazamento entre escolas e",
     "indetectavel. Ver tenantIsolation.test.ts.",
     "",
-    "'localhost' e '127.0.0.1' apontam para o tenant A para que o fluxo normal de",
-    "desenvolvimento continue funcionando sem configurar nada."
+    "Estrutura de dominio por PATH (decisao de 13/09/2026) - resolucao e por",
+    "SLUG (primeiro segmento do path), nunca por Host/hosts. Em dev:",
+    "http://localhost:3401/api/v1/ceti/health"
   ],
   "tenants": [
     {
       "id": "11111111-1111-1111-1111-111111111111",
       "slug": "ceti",
       "status": "active",
-      "hosts": ["ceti.localhost", "localhost", "127.0.0.1"],
       "settings": {
         "logoUrl": null,
         "primaryColor": "#1C8C0B",
@@ -27,7 +27,6 @@
       "id": "22222222-2222-2222-2222-222222222222",
       "slug": "escolab",
       "status": "active",
-      "hosts": ["escolab.localhost"],
       "settings": {
         "logoUrl": null,
         "primaryColor": "#1D4ED8",
@@ -40,7 +39,6 @@
       "id": "33333333-3333-3333-3333-333333333333",
       "slug": "escolac",
       "status": "suspended",
-      "hosts": ["escolac.localhost"],
       "settings": {
         "logoUrl": null,
         "primaryColor": "#15803D",
