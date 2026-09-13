@@ -34,7 +34,8 @@
 #
 # Variaveis obrigatorias em .env.production (nunca versionado):
 #   POSTGRES_OWNER_PASSWORD, POSTGRES_APP_PASSWORD, SESSION_SECRET,
-#   CORE_INTERNAL_TOKEN (MESMO valor ja configurado do lado da Core).
+#   CORE_INTERNAL_TOKEN (MESMO valor ja configurado do lado da Core),
+#   SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD, SEED_ADMIN_NAME.
 
 services:
   postgres:
@@ -67,7 +68,18 @@ services:
       retries: 10
     networks: [internal]
 
-  api:
+  # Chave do servico RENOMEADA (13/09/2026, era "api") - BUG REAL de producao:
+  # Docker Compose registra automaticamente a CHAVE do servico como alias de
+  # rede, alem dos "aliases:" explicitos abaixo, em QUALQUER rede que o servico
+  # entre - inclusive a externa "platform" (ntfood_demo_web), compartilhada com
+  # o projeto "ntfood". Como o projeto ntfood TAMBEM tem um servico chamado
+  # "api" (e "web"), os dois disputavam o mesmo nome DNS na rede compartilhada -
+  # Docker resolvia "web"/"api" para QUALQUER um dos dois containers, o que
+  # fazia demo.nthub.online (Traefik -> http://web:80) abrir este modulo por
+  # engano, de forma intermitente. Renomear a CHAVE (nao so o alias) elimina a
+  # colisao pela raiz - os aliases explicitos abaixo (que o Traefik de fato usa)
+  # continuam os mesmos.
+  armario-api:
     image: ghcr.io/bleidson/armario-digital-api:prod
     restart: unless-stopped
     depends_on:
@@ -78,7 +90,10 @@ services:
     environment:
       NODE_ENV: production
       PORT: "3401"
-      APP_URL: https://armario-digital.nthub.online
+      # Estrutura de dominio por PATH (13/09/2026): dominio PROPRIO do modulo
+      # (nunca mais "armario-digital.nthub.online" - sem tenant no dominio,
+      # o slug da escola vira depois na URL: ntarmario.nthub.online/ceti).
+      APP_URL: https://ntarmario.nthub.online
       DATABASE_URL: postgresql://armario_app:${POSTGRES_APP_PASSWORD}@postgres:5432/armario_prod?schema=public
       DATABASE_MIGRATION_URL: postgresql://armario_owner:${POSTGRES_OWNER_PASSWORD}@postgres:5432/armario_prod?schema=public
       SESSION_SECRET: ${SESSION_SECRET}
@@ -94,10 +109,18 @@ services:
       # usa) -> integra com a Core real. Nunca hardcoded aqui de proposito -
       # ver .env.production.example.
       CORE_API_URL: ${CORE_API_URL:-}
+      # Fixture de PRODUCAO (host real, nunca localhost) do MockCoreClient -
+      # so importa enquanto CORE_API_URL estiver vazio acima.
+      CORE_MOCK_TENANTS_FILE: apps/api/dist/lib/tenants.prod.json
       REDIS_URL: redis://redis:6379
       # Uploads persistem em volume nomeado (ver volumes abaixo) - o container
       # em si e descartavel a cada deploy novo.
       UPLOADS_DIR: uploads
+      # Seed idempotente do primeiro ADMIN (nao ha SSH/exec pro banco de
+      # producao via Hostinger MCP) - ver apps/api/prisma/seedAdmin.ts.
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+      SEED_ADMIN_NAME: ${SEED_ADMIN_NAME}
     volumes:
       - armario_uploads:/app/apps/api/uploads
     networks:
@@ -105,7 +128,9 @@ services:
       platform:
         aliases: [armario-digital-api]
 
-  web:
+  # Mesma renomeacao de chave que "armario-api" acima, mesmo motivo (colisao
+  # de alias "web" com o projeto ntfood na rede externa compartilhada).
+  armario-web:
     image: ghcr.io/bleidson/armario-digital-web:prod
     restart: unless-stopped
     networks:
