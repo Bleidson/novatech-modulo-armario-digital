@@ -27,7 +27,7 @@ export function Login() {
     try {
       await login(email, password);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel entrar. Tente novamente.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível entrar. Tente novamente.");
     } finally {
       setSubmitting(false);
     }
@@ -37,7 +37,7 @@ export function Login() {
     <div className="page-shell">
       <Header />
       <div className="app-main" style={{ paddingTop: "10vh" }}>
-      <h1>Armario Digital</h1>
+      <h1>Armário Digital</h1>
       <p className="text-muted">Entre com seu e-mail e senha.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -73,7 +73,7 @@ export function Login() {
       </form>
 
       <p className="text-muted" style={{ marginTop: 20, fontSize: 13 }}>
-        Ainda nao tem cadastro? <Link to={tenantPath("/cadastro")}>Cadastre-se como professor</Link>
+        Ainda não tem cadastro? <Link to={tenantPath("/cadastro")}>Cadastre-se como professor</Link>
       </p>
       </div>
     </div>

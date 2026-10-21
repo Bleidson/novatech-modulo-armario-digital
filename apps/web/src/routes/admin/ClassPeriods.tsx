@@ -35,7 +35,7 @@ export function ClassPeriods() {
     api
       .get<ClassPeriod[]>("/class-periods")
       .then((data) => setPeriods([...data].sort((a, b) => a.displayOrder - b.displayOrder)))
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Nao foi possivel carregar os horarios."));
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar os horários."));
   }, []);
 
   useEffect(load, [load]);
@@ -80,7 +80,7 @@ export function ClassPeriods() {
       closeForm();
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel salvar o horario.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível salvar o horário.");
     } finally {
       setSaving(false);
     }
@@ -93,21 +93,21 @@ export function ClassPeriods() {
       await api.post(`/class-periods/${period.id}/${period.active ? "deactivate" : "activate"}`);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel atualizar o horario.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível atualizar o horário.");
     } finally {
       setBusyId(null);
     }
   }
 
   async function handleDelete(period: ClassPeriod) {
-    if (!window.confirm(`Excluir "${period.name}"? Esta acao nao pode ser desfeita.`)) return;
+    if (!window.confirm(`Excluir "${period.name}"? Esta ação não pode ser desfeita.`)) return;
     setBusyId(period.id);
     setError(null);
     try {
       await api.delete(`/class-periods/${period.id}`);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel excluir o horario.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível excluir o horário.");
     } finally {
       setBusyId(null);
     }
@@ -134,7 +134,7 @@ export function ClassPeriods() {
       });
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel reordenar os horarios.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível reordenar os horários.");
       load();
     }
   }
@@ -142,21 +142,21 @@ export function ClassPeriods() {
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-        <h1 style={{ marginBottom: 0 }}>Horarios</h1>
+        <h1 style={{ marginBottom: 0 }}>Horários</h1>
         {!formOpen && (
           <button type="button" className="btn btn-primary" onClick={openCreateForm}>
             <Plus size={16} /> Novo
           </button>
         )}
       </div>
-      <p className="text-muted">Grade de horarios/periodos de aula em que reservas podem acontecer.</p>
+      <p className="text-muted">Grade de horários/períodos de aula em que reservas podem acontecer.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
 
       {formOpen && (
         <form className="card" style={{ marginBottom: 14 }} onSubmit={handleSubmit}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <h3 style={{ marginBottom: 12 }}>{form.id ? "Editar horario" : "Novo horario"}</h3>
+            <h3 style={{ marginBottom: 12 }}>{form.id ? "Editar horário" : "Novo horário"}</h3>
             <button type="button" className="btn" onClick={closeForm} aria-label="Fechar">
               <X size={18} />
             </button>
@@ -170,7 +170,7 @@ export function ClassPeriods() {
               required
               value={form.name}
               onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="Ex.: 1o horario"
+              placeholder="Ex.: 1o horário"
             />
           </div>
 
@@ -204,7 +204,7 @@ export function ClassPeriods() {
       )}
 
       {periods === null && <p className="text-muted">Carregando...</p>}
-      {periods?.length === 0 && !formOpen && <p className="text-muted">Nenhum horario cadastrado.</p>}
+      {periods?.length === 0 && !formOpen && <p className="text-muted">Nenhum horário cadastrado.</p>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {periods?.map((period, index) => (

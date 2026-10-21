@@ -23,7 +23,7 @@ export function PendingApprovals() {
     api
       .get<PendingProfessor[]>("/auth/professors/pending")
       .then(setPending)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Nao foi possivel carregar a fila."));
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar a fila."));
   }, []);
 
   useEffect(load, [load]);
@@ -34,7 +34,7 @@ export function PendingApprovals() {
       await api.post(`/auth/professors/${id}/approve`);
       setPending((prev) => prev?.filter((p) => p.id !== id) ?? null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel aprovar.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível aprovar.");
     } finally {
       setBusyId(null);
     }
@@ -46,7 +46,7 @@ export function PendingApprovals() {
       await api.post(`/auth/professors/${id}/reject`, {});
       setPending((prev) => prev?.filter((p) => p.id !== id) ?? null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel rejeitar.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível rejeitar.");
     } finally {
       setBusyId(null);
     }
@@ -54,8 +54,8 @@ export function PendingApprovals() {
 
   return (
     <div>
-      <h1>Aprovacoes</h1>
-      <p className="text-muted">Professores que se cadastraram e aguardam liberacao.</p>
+      <h1>Aprovações</h1>
+      <p className="text-muted">Professores que se cadastraram e aguardam liberação.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
 

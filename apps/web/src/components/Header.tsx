@@ -6,7 +6,7 @@ import { useTheme } from "../lib/theme";
 import { useTenantPath } from "../lib/tenantPath";
 
 const ROLE_LABEL: Record<string, string> = {
-  ADMIN: "Coordenacao",
+  ADMIN: "Coordenação",
   PROFESSOR: "Professor",
 };
 
@@ -43,7 +43,7 @@ export function Header() {
           className={isDark ? "site-header-logo site-header-logo-boxed" : "site-header-logo"}
         />
         <div className="site-header-titles">
-          <strong>Armario Digital</strong>
+          <strong>Armário Digital</strong>
           <span>CETI Dr. Dionisio Rodrigues Nogueira</span>
         </div>
       </div>

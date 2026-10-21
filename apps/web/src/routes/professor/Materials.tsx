@@ -29,7 +29,7 @@ export function Materials() {
     api
       .get<Material[]>("/materials", { active: true })
       .then(setMaterials)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Nao foi possivel carregar os materiais."));
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar os materiais."));
   }, []);
 
   useEffect(load, [load]);
@@ -37,11 +37,11 @@ export function Materials() {
   return (
     <div>
       <h1>Materiais</h1>
-      <p className="text-muted">Escolha um material para consultar o calendario e reservar um horario.</p>
+      <p className="text-muted">Escolha um material para consultar o calendário e reservar um horário.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
       {materials === null && !error && <p className="text-muted">Carregando...</p>}
-      {materials?.length === 0 && <p className="text-muted">Nenhum material disponivel no momento.</p>}
+      {materials?.length === 0 && <p className="text-muted">Nenhum material disponível no momento.</p>}
 
       <div className="material-grid">
         {materials?.map((material) => (
@@ -59,7 +59,7 @@ export function Materials() {
               <h3>{material.name}</h3>
               {material.description && <p>{material.description}</p>}
               <button type="button" className="btn btn-primary btn-block" onClick={() => navigate(tenantPath(`/professor/calendario/${material.id}`))}>
-                Ver calendario <ChevronRight size={16} />
+                Ver calendário <ChevronRight size={16} />
               </button>
             </div>
           </article>

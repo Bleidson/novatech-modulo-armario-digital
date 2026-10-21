@@ -26,7 +26,7 @@ export function Signup() {
       await api.post("/auth/signup", { name, email, phone, password });
       setDone(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel enviar o cadastro. Tente novamente.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível enviar o cadastro. Tente novamente.");
     } finally {
       setSubmitting(false);
     }
@@ -39,7 +39,7 @@ export function Signup() {
         <div className="app-main" style={{ paddingTop: "10vh" }}>
           <h1>Cadastro enviado</h1>
           <p className="text-muted">
-            Seu cadastro foi enviado para a coordenacao. Voce vai poder entrar assim que ele for aprovado.
+            Seu cadastro foi enviado para a coordenação. Você vai poder entrar assim que ele for aprovado.
           </p>
           <button type="button" className="btn btn-primary btn-block" onClick={() => navigate(tenantPath("/login"))}>
             Voltar para o login
@@ -54,7 +54,7 @@ export function Signup() {
       <Header />
       <div className="app-main" style={{ paddingTop: "4vh" }}>
       <h1>Cadastro de professor</h1>
-      <p className="text-muted">Seu acesso precisa ser aprovado pela coordenacao antes do primeiro login.</p>
+      <p className="text-muted">Seu acesso precisa ser aprovado pela coordenação antes do primeiro login.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
 
@@ -87,7 +87,7 @@ export function Signup() {
             onChange={(e) => setPhone(e.target.value)}
           />
           <p className="text-muted" style={{ fontSize: 12, marginTop: 4 }}>
-            Usado para negociar horarios com outros professores quando necessario.
+            Usado para negociar horários com outros professores quando necessário.
           </p>
         </div>
         <div className="field">
@@ -108,7 +108,7 @@ export function Signup() {
       </form>
 
       <p className="text-muted" style={{ marginTop: 20, fontSize: 13 }}>
-        Ja tem cadastro aprovado? <Link to={tenantPath("/login")}>Entrar</Link>
+        Já tem cadastro aprovado? <Link to={tenantPath("/login")}>Entrar</Link>
       </p>
       </div>
     </div>

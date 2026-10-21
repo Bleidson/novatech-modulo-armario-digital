@@ -13,8 +13,8 @@ function navItems(tenantPath: (path: string) => string) {
   return [
     { to: tenantPath("/admin"), label: "Painel", icon: LayoutDashboard },
     { to: tenantPath("/admin/materiais"), label: "Materiais", icon: Package },
-    { to: tenantPath("/admin/horarios"), label: "Horarios", icon: CalendarClock },
-    { to: tenantPath("/admin/aprovacoes"), label: "Aprovacoes", icon: UserCheck },
+    { to: tenantPath("/admin/horarios"), label: "Horários", icon: CalendarClock },
+    { to: tenantPath("/admin/aprovacoes"), label: "Aprovações", icon: UserCheck },
   ];
 }
 

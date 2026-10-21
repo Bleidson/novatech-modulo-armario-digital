@@ -36,7 +36,7 @@ export function Account() {
     api
       .get<ReservationSummary[]>("/reservations")
       .then(setReservations)
-      .catch((err) => setSummaryError(err instanceof ApiError ? err.message : "Nao foi possivel carregar o resumo."));
+      .catch((err) => setSummaryError(err instanceof ApiError ? err.message : "Não foi possível carregar o resumo."));
   }, []);
 
   useEffect(loadSummary, [loadSummary]);
@@ -59,7 +59,7 @@ export function Account() {
       await refresh();
       setSaved(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel salvar seus dados.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível salvar seus dados.");
     } finally {
       setSaving(false);
     }
@@ -68,7 +68,7 @@ export function Account() {
   return (
     <div>
       <h1>Conta</h1>
-      <p className="text-muted">Seus dados pessoais e um resumo da sua atividade no Armario Digital.</p>
+      <p className="text-muted">Seus dados pessoais e um resumo da sua atividade no Armário Digital.</p>
 
       <div className="card" style={{ marginBottom: 16 }}>
         <h3 style={{ marginBottom: 12 }}>Dados pessoais</h3>
@@ -84,7 +84,7 @@ export function Account() {
             <label htmlFor="account-email">E-mail</label>
             <input id="account-email" className="input" value={user?.email ?? ""} disabled />
             <p className="text-muted" style={{ fontSize: 12, marginTop: 4 }}>
-              O e-mail nao pode ser alterado por aqui.
+              O e-mail não pode ser alterado por aqui.
             </p>
           </div>
           <div className="field">
@@ -100,7 +100,7 @@ export function Account() {
               onChange={(e) => setPhone(e.target.value)}
             />
             <p className="text-muted" style={{ fontSize: 12, marginTop: 4 }}>
-              Usado para negociar horarios com outros professores.
+              Usado para negociar horários com outros professores.
             </p>
           </div>
           <button type="submit" className="btn btn-primary btn-block" disabled={saving}>

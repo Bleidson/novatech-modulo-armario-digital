@@ -44,7 +44,7 @@ export function MyReservations() {
       .get<Reservation[]>("/reservations")
       .then(setReservations)
       .catch((err) =>
-        setError(err instanceof ApiError ? err.message : "Nao foi possivel carregar suas reservas."),
+        setError(err instanceof ApiError ? err.message : "Não foi possível carregar suas reservas."),
       );
   }, []);
 
@@ -69,7 +69,7 @@ export function MyReservations() {
       await api.delete(`/reservations/${reservation.id}`);
       setReservations((prev) => prev?.filter((r) => r.id !== reservation.id) ?? null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel cancelar esta reserva.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível cancelar esta reserva.");
     } finally {
       setBusyId(null);
     }
@@ -90,14 +90,14 @@ export function MyReservations() {
     if (!phone) return null;
     const digits = digitsOnly(phone);
     if (!digits) return null;
-    const message = "Ola! Preciso falar sobre uma reserva no Armario Digital.";
+    const message = "Olá! Preciso falar sobre uma reserva no Armário Digital.";
     return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
   }, [phone]);
 
   return (
     <div>
       <h1>Minhas reservas</h1>
-      <p className="text-muted">Suas proximas reservas, agrupadas por dia.</p>
+      <p className="text-muted">Suas próximas reservas, agrupadas por dia.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
 
@@ -109,12 +109,12 @@ export function MyReservations() {
           className="btn btn-secondary btn-block"
           style={{ marginBottom: 16 }}
         >
-          <MessageCircle size={16} /> Falar com a coordenacao pelo WhatsApp
+          <MessageCircle size={16} /> Falar com a coordenação pelo WhatsApp
         </a>
       )}
 
       {reservations === null && !error && <p className="text-muted">Carregando...</p>}
-      {reservations?.length === 0 && <p className="text-muted">Voce ainda nao tem reservas.</p>}
+      {reservations?.length === 0 && <p className="text-muted">Você ainda não tem reservas.</p>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         {grouped.map(([day, items]) => (

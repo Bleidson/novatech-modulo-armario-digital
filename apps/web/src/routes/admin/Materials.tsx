@@ -39,7 +39,7 @@ export function Materials() {
     api
       .get<Material[]>("/materials")
       .then(setMaterials)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Nao foi possivel carregar os materiais."));
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar os materiais."));
   }, []);
 
   useEffect(load, [load]);
@@ -76,7 +76,7 @@ export function Materials() {
       const { url } = await uploadMaterialImage(file);
       setForm((prev) => ({ ...prev, imageUrl: url }));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel enviar a imagem.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível enviar a imagem.");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -102,7 +102,7 @@ export function Materials() {
       closeForm();
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel salvar o material.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível salvar o material.");
     } finally {
       setSaving(false);
     }
@@ -115,21 +115,21 @@ export function Materials() {
       await api.post(`/materials/${material.id}/${material.active ? "deactivate" : "activate"}`);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel atualizar o material.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível atualizar o material.");
     } finally {
       setBusyId(null);
     }
   }
 
   async function handleDelete(material: Material) {
-    if (!window.confirm(`Excluir "${material.name}"? Esta acao nao pode ser desfeita.`)) return;
+    if (!window.confirm(`Excluir "${material.name}"? Esta ação não pode ser desfeita.`)) return;
     setBusyId(material.id);
     setError(null);
     try {
       await api.delete(`/materials/${material.id}`);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel excluir o material.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível excluir o material.");
     } finally {
       setBusyId(null);
     }
@@ -145,7 +145,7 @@ export function Materials() {
           </button>
         )}
       </div>
-      <p className="text-muted">Catalogo de itens que podem ser reservados pelos professores.</p>
+      <p className="text-muted">Catálogo de itens que podem ser reservados pelos professores.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
 

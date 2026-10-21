@@ -25,29 +25,29 @@ export function Dashboard() {
     api
       .get<unknown[]>("/materials", { active: true })
       .then((data) => setActiveMaterials(data.length))
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Nao foi possivel carregar os dados."));
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar os dados."));
 
     api
       .get<unknown[]>("/class-periods", { active: true })
       .then((data) => setActiveClassPeriods(data.length))
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Nao foi possivel carregar os dados."));
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar os dados."));
 
     api
       .get<unknown[]>("/auth/professors/pending")
       .then((data) => setPendingApprovals(data.length))
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Nao foi possivel carregar os dados."));
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar os dados."));
   }, []);
 
   const cards: StatCard[] = [
     { label: "Materiais ativos", value: activeMaterials, icon: Package, to: tenantPath("/admin/materiais") },
-    { label: "Horarios ativos", value: activeClassPeriods, icon: CalendarClock, to: tenantPath("/admin/horarios") },
-    { label: "Aprovacoes pendentes", value: pendingApprovals, icon: UserCheck, to: tenantPath("/admin/aprovacoes") },
+    { label: "Horários ativos", value: activeClassPeriods, icon: CalendarClock, to: tenantPath("/admin/horarios") },
+    { label: "Aprovações pendentes", value: pendingApprovals, icon: UserCheck, to: tenantPath("/admin/aprovacoes") },
   ];
 
   return (
     <div>
       <h1>Painel</h1>
-      <p className="text-muted">Visao geral do Armario Digital.</p>
+      <p className="text-muted">Visão geral do Armário Digital.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
 

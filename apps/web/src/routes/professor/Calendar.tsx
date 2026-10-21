@@ -135,14 +135,14 @@ export function Calendar() {
     api
       .get<Material>(`/materials/${materialId}`)
       .then(setMaterial)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Material nao encontrado."));
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Material não encontrado."));
   }, [materialId]);
 
   useEffect(() => {
     api
       .get<ClassPeriod[]>("/class-periods", { active: true })
       .then(setClassPeriods)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Nao foi possivel carregar os horarios."));
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Não foi possível carregar os horários."));
   }, []);
 
   const loadGrid = useCallback(() => {
@@ -161,7 +161,7 @@ export function Calendar() {
         setLoadingGrid(false);
       })
       .catch((err) => {
-        setError(err instanceof ApiError ? err.message : "Nao foi possivel carregar a disponibilidade.");
+        setError(err instanceof ApiError ? err.message : "Não foi possível carregar a disponibilidade.");
         setLoadingGrid(false);
       });
     // Selecao nao sobrevive a troca de semana/recarregamento - evita confirmar uma
@@ -209,7 +209,7 @@ export function Calendar() {
       setFeedback("Reserva cancelada.");
       loadGrid();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Nao foi possivel cancelar esta reserva.");
+      setError(err instanceof ApiError ? err.message : "Não foi possível cancelar esta reserva.");
     }
   }
 
@@ -239,8 +239,8 @@ export function Calendar() {
       const digits = phone.replace(/\D/g, "");
       const myName = user?.name ?? "um colega";
       const message =
-        `Ola, ${negotiation.reservedByName}! Sou ${myName} e gostaria de negociar o horario ` +
-        `${negotiation.materialName}, ${negotiation.dateLabel}, ${negotiation.classPeriodName} que voce reservou. ` +
+        `Olá, ${negotiation.reservedByName}! Sou ${myName} e gostaria de negociar o horário ` +
+        `${negotiation.materialName}, ${negotiation.dateLabel}, ${negotiation.classPeriodName} que você reservou. ` +
         `${negotiationReason.trim()}. Poderia me ajudar?`;
       const waLink = `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
       setNegotiation(null);
@@ -248,7 +248,7 @@ export function Calendar() {
       // Tarefa secao 2.4.3).
       window.location.href = waLink;
     } catch (err) {
-      setNegotiationError(err instanceof ApiError ? err.message : "Nao foi possivel iniciar a negociacao.");
+      setNegotiationError(err instanceof ApiError ? err.message : "Não foi possível iniciar a negociação.");
     } finally {
       setNegotiationSending(false);
     }
@@ -301,7 +301,7 @@ export function Calendar() {
     if (okCount > 0 && failures.length === 0) {
       setFeedback(`${okCount} reserva(s) confirmada(s) com sucesso.`);
     } else if (okCount > 0 && failures.length > 0) {
-      setFeedback(`${okCount} reserva(s) confirmada(s). ${failures.length} nao puderam ser criadas (outro professor reservou primeiro): ${failures.join("; ")}`);
+      setFeedback(`${okCount} reserva(s) confirmada(s). ${failures.length} não puderam ser criadas (outro professor reservou primeiro): ${failures.join("; ")}`);
     } else {
       setError(`Nenhuma reserva pode ser criada: ${failures.join("; ")}`);
     }
@@ -355,7 +355,7 @@ export function Calendar() {
           <ChevronLeft size={16} />
         </button>
         <b>{formatWeekRangeLabel(days)}</b>
-        <button type="button" onClick={() => setAnchorDate((d) => shiftWeek(d, 7))} aria-label="Proxima semana">
+        <button type="button" onClick={() => setAnchorDate((d) => shiftWeek(d, 7))} aria-label="Próxima semana">
           <ChevronRight size={16} />
         </button>
         <span className="week-nav-jump-wrap">
@@ -386,7 +386,7 @@ export function Calendar() {
 
       <div className="calendarwrap">
         <div className="calgrid">
-          <div className="corner">HORARIO</div>
+          <div className="corner">HORÁRIO</div>
           {days.map((d, i) => (
             <div className="dayhead" key={dayISOs[i]}>
               <b>{WEEKDAY_LABELS[i]}</b>
@@ -409,7 +409,7 @@ export function Calendar() {
                     onClick={() => handleCellClick(dateISO, period.id, period.name)}
                   >
                     {state === "past" && <span>—</span>}
-                    {state === "free" && <span>Disponivel</span>}
+                    {state === "free" && <span>Disponível</span>}
                     {state === "selected" && (
                       <>
                         <CheckCircle2 size={15} />
@@ -419,7 +419,7 @@ export function Calendar() {
                     {(state === "busy-mine" || state === "busy-other") && (
                       <>
                         <span>Reservado</span>
-                        <b>{state === "busy-mine" ? "Voce" : slot?.reservedBy?.name.replace(/^Prof\.?\s*/i, "")}</b>
+                        <b>{state === "busy-mine" ? "Você" : slot?.reservedBy?.name.replace(/^Prof\.?\s*/i, "")}</b>
                       </>
                     )}
                   </div>
@@ -433,11 +433,11 @@ export function Calendar() {
       {selected.size > 0 && (
         <div className="reservebar">
           <div>
-            <b>{selected.size} horario(s) selecionado(s)</b>
-            <span>Voce pode selecionar varias aulas da semana antes de confirmar.</span>
+            <b>{selected.size} horário(s) selecionado(s)</b>
+            <span>Você pode selecionar várias aulas da semana antes de confirmar.</span>
           </div>
           <button type="button" disabled={confirming} onClick={handleConfirmReservations}>
-            {confirming ? "Reservando..." : "Reservar horarios"} <CheckCircle2 size={14} />
+            {confirming ? "Reservando..." : "Reservar horários"} <CheckCircle2 size={14} />
           </button>
         </div>
       )}
@@ -446,7 +446,7 @@ export function Calendar() {
         <div className="modal-scrim" role="dialog" aria-modal="true">
           <div className="modal-box">
             <div className="modal-head">
-              <h3>Negociar horario</h3>
+              <h3>Negociar horário</h3>
               <button type="button" className="btn" onClick={() => setNegotiation(null)} aria-label="Fechar">
                 <X size={18} />
               </button>
@@ -464,7 +464,7 @@ export function Calendar() {
                 rows={3}
                 value={negotiationReason}
                 onChange={(e) => setNegotiationReason(e.target.value)}
-                placeholder="Ex.: preciso desse horario porque minha turma tem prova nesse dia..."
+                placeholder="Ex.: preciso desse horário porque minha turma tem prova nesse dia..."
               />
             </div>
             <button type="button" className="btn btn-cta btn-block" disabled={negotiationSending} onClick={confirmNegotiation}>

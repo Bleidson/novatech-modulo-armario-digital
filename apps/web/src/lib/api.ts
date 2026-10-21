@@ -146,7 +146,7 @@ export async function uploadMaterialImage(file: File): Promise<{ url: string }> 
   const json = (await res.json().catch(() => null)) as Envelope | null;
 
   if (!res.ok) {
-    const errorBody = json?.error ?? { code: "UNKNOWN_ERROR", message: "Nao foi possivel enviar a imagem." };
+    const errorBody = json?.error ?? { code: "UNKNOWN_ERROR", message: "Não foi possível enviar a imagem." };
     throw new ApiError(res.status, errorBody);
   }
 
