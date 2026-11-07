@@ -20,6 +20,9 @@ const envSchema = z.object({
   // (POST /internal/offboard, /internal/maintenance, GET /internal/setup-schema,
   // POST /internal/setup). Mesmo valor configurado do lado da Core.
   CORE_INTERNAL_TOKEN: z.string().min(16),
+  // F03: credenciais de entrada individuais (Core/Site). Ausente, mantem o
+  // token legado durante a migracao controlada da F03-T02.
+  SERVICE_CREDENTIALS_JSON: z.string().optional(),
   // Endereco da Core real (HttpCoreClient, lib/core-client.ts). Ausente -> continua
   // MockCoreClient, exatamente como no Restaurante.
   //
@@ -48,4 +51,37 @@ if (!parsed.success) {
   throw new Error("Configuracao de ambiente invalida - verifique o .env (ver .env.example)");
 }
 
-export const env = parsed.data;
+const serviceCredentialSchema = z.object({
+  serviceId: z.string().regex(/^[a-z0-9][a-z0-9._-]{1,63}$/),
+  token: z.string().min(32),
+  scopes: z.array(z.string().regex(/^[a-z][a-z0-9.-]*$/)).min(1),
+}).strict();
+
+function parseServiceCredentials(value: string | undefined) {
+  if (!value) return [];
+
+  let json: unknown;
+  try {
+    json = JSON.parse(value);
+  } catch {
+    throw new Error("SERVICE_CREDENTIALS_JSON nao e JSON valido.");
+  }
+
+  const credentials = z.array(serviceCredentialSchema).min(1).safeParse(json);
+  if (!credentials.success) throw new Error("SERVICE_CREDENTIALS_JSON nao segue o contrato esperado.");
+
+  const ids = new Set<string>();
+  const tokens = new Set<string>();
+  for (const credential of credentials.data) {
+    if (ids.has(credential.serviceId)) throw new Error("SERVICE_CREDENTIALS_JSON contem serviceId duplicado.");
+    if (tokens.has(credential.token)) throw new Error("SERVICE_CREDENTIALS_JSON reutiliza token entre servicos.");
+    ids.add(credential.serviceId);
+    tokens.add(credential.token);
+  }
+  return credentials.data;
+}
+
+export const env = {
+  ...parsed.data,
+  serviceCredentials: parseServiceCredentials(parsed.data.SERVICE_CREDENTIALS_JSON),
+};

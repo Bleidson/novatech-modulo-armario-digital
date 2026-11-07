@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { asyncHandler } from "../../shared/middlewares/asyncHandler.js";
-import { requireInternalToken } from "../../shared/middlewares/internalAuth.js";
+import { requireInternalScope, requireInternalToken } from "../../shared/middlewares/internalAuth.js";
 import * as internalController from "./internal.controller.js";
 
 // Superficie EXCLUSIVAMENTE servidor-a-servidor - Core -> modulo (offboard,
@@ -10,7 +10,7 @@ import * as internalController from "./internal.controller.js";
 export const internalRouter = Router();
 internalRouter.use(requireInternalToken);
 
-internalRouter.post("/offboard", asyncHandler(internalController.offboard));
-internalRouter.post("/maintenance", asyncHandler(internalController.maintenance));
-internalRouter.get("/setup-schema", internalController.setupSchema);
-internalRouter.post("/setup", asyncHandler(internalController.setup));
+internalRouter.post("/offboard", requireInternalScope("module.offboard"), asyncHandler(internalController.offboard));
+internalRouter.post("/maintenance", requireInternalScope("module.maintenance"), asyncHandler(internalController.maintenance));
+internalRouter.get("/setup-schema", requireInternalScope("module.setup-schema-read"), internalController.setupSchema);
+internalRouter.post("/setup", requireInternalScope("module.setup-write"), asyncHandler(internalController.setup));

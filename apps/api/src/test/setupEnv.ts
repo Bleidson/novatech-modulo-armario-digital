@@ -11,6 +11,15 @@ process.env.DATABASE_URL ??= "postgresql://armario_app:armario_app_dev@127.0.0.1
 process.env.DATABASE_MIGRATION_URL ??= "postgresql://armario_owner:armario_owner_dev@127.0.0.1:5433/armario_test";
 process.env.SESSION_SECRET ??= "test-secret-nao-usar-em-producao-0000000000";
 process.env.CORE_INTERNAL_TOKEN ??= "test-internal-token-nao-usar-em-producao-0000";
+process.env.SERVICE_CREDENTIALS_JSON ??= JSON.stringify([
+  {
+    serviceId: "legacy-test-suite",
+    token: "test-internal-token-nao-usar-em-producao-0000",
+    scopes: ["module.offboard", "module.maintenance", "module.setup-schema-read", "module.setup-write"],
+  },
+  { serviceId: "core-test", token: "core-test-token-000000000000000001", scopes: ["module.offboard", "module.maintenance"] },
+  { serviceId: "site-test", token: "site-test-token-000000000000000001", scopes: ["module.setup-schema-read", "module.setup-write"] },
+]);
 // Pasta irma, nunca commitada - isola o teste do servidor de dev (mesmo bug real ja
 // encontrado e corrigido no modulo Restaurante: sem isto, um rmSync recursivo entre
 // testes apagaria uploads reais de dev).
