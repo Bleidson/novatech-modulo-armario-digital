@@ -32,6 +32,8 @@ const envSchema = z.object({
   // montando o deploy de producao, nunca aparece em dev (onde a chave
   // simplesmente nao existe no .env).
   CORE_API_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
+  CORE_RECOVERY_API_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
+  CORE_RECOVERY_SERVICE_TOKEN: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(32).optional()),
   CORE_CLIENT_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
   CORE_MOCK_TENANTS_FILE: z.string().optional(),
   // Cache de resolucao de tenant do HttpCoreClient - so conecta de fato quando

@@ -109,6 +109,8 @@ services:
       # usa) -> integra com a Core real. Nunca hardcoded aqui de proposito -
       # ver .env.production.example.
       CORE_API_URL: ${CORE_API_URL:-}
+      CORE_RECOVERY_API_URL: ${CORE_RECOVERY_API_URL:-}
+      CORE_RECOVERY_SERVICE_TOKEN: ${CORE_RECOVERY_SERVICE_TOKEN:-}
       # Fixture de PRODUCAO (host real, nunca localhost) do MockCoreClient -
       # so importa enquanto CORE_API_URL estiver vazio acima.
       CORE_MOCK_TENANTS_FILE: apps/api/dist/lib/tenants.prod.json

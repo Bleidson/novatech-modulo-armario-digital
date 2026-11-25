@@ -72,6 +72,8 @@ export function Login() {
         </button>
       </form>
 
+      <p><Link to={tenantPath("/recuperar-senha")}>Esqueceu sua senha?</Link></p>
+
       <p className="text-muted" style={{ marginTop: 20, fontSize: 13 }}>
         Ainda não tem cadastro? <Link to={tenantPath("/cadastro")}>Cadastre-se como professor</Link>
       </p>

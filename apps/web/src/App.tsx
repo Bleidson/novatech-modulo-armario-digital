@@ -5,6 +5,7 @@ import { ThemeProvider } from "./lib/theme";
 
 import { Login } from "./routes/Login";
 import { Signup } from "./routes/Signup";
+import { PasswordRecovery } from "./routes/PasswordRecovery";
 
 import { AdminLayout } from "./routes/admin/AdminLayout";
 import { PendingApprovals } from "./routes/admin/PendingApprovals";
@@ -32,6 +33,8 @@ export function App() {
             <Route path="/:tenantSlug" element={<Outlet />}>
               <Route path="login" element={<Login />} />
               <Route path="cadastro" element={<Signup />} />
+              <Route path="recuperar-senha" element={<PasswordRecovery mode="request" />} />
+              <Route path="redefinir-senha" element={<PasswordRecovery mode="confirm" />} />
 
               <Route
                 path="admin"
